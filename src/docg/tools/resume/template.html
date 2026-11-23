@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+@page {
+  margin: 14mm 16mm 16mm 16mm;
+}
+body {
+  font-size: 9pt;
+  line-height: 1.42;
+}
+{% endblock %}
+
+{% block header %}
+<header class="resume-header">
+  <h1 class="resume-name">{{ full_name }}</h1>
+  {% if headline %}
+    <div class="resume-headline">{{ headline }}</div>
+  {% endif %}
+  {% if contact_parts %}
+    <div class="resume-contact">{{ contact_parts | join("  •  ") }}</div>
+  {% endif %}
+</header>
+{% endblock %}
+
+{% block content %}
+{% if resume.summary %}
+  <div class="resume-section-heading">Summary</div>
+  <p class="resume-summary">{{ resume.summary }}</p>
+{% endif %}
+
+{% if resume.experience %}
+  <div class="resume-section-heading">Experience</div>
+  {% for exp in resume.experience %}
+    <div class="exp-item">
+      <div class="exp-header">
+        <div>
+          <span class="exp-role">{{ exp.role }}</span>
+          <span class="exp-org"> — {{ exp.company }}{% if exp.location %}, {{ exp.location }}{% endif %}</span>
+        </div>
+        <div class="exp-period">{{ exp.period }}</div>
+      </div>
+      {% if exp.highlights %}
+        <ul class="exp-bullets">
+          {% for h in exp.highlights %}
+            <li>{{ h }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if resume.projects %}
+  <div class="resume-section-heading">Selected Projects</div>
+  {% for proj in resume.projects %}
+    <div class="exp-item">
+      <div class="exp-header">
+        <div>
+          <span class="exp-role">{{ proj.name }}</span>
+          {% if proj.url %}<span class="exp-org"> — {{ proj.url }}</span>{% endif %}
+        </div>
+        {% if proj.period %}<div class="exp-period">{{ proj.period }}</div>{% endif %}
+      </div>
+      {% if proj.tech %}
+        <div class="exp-meta">{{ proj.tech | join(" • ") }}</div>
+      {% endif %}
+      {% if proj.highlights %}
+        <ul class="exp-bullets">
+          {% for h in proj.highlights %}
+            <li>{{ h }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if resume.skills %}
+  <div class="resume-section-heading">Skills</div>
+  {% for group in resume.skills %}
+    <div class="skill-row">
+      <span class="skill-cat">{{ group.category }}:</span>
+      {{ group.items | join(", ") }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if resume.education %}
+  <div class="resume-section-heading">Education</div>
+  {% for edu in resume.education %}
+    <div class="exp-item">
+      <div class="exp-header">
+        <div>
+          <span class="exp-role">{{ edu.degree }}</span>
+          <span class="exp-org"> — {{ edu.institution }}{% if edu.location %}, {{ edu.location }}{% endif %}</span>
+        </div>
+        <div class="exp-period">{{ edu.period }}</div>
+      </div>
+      {% if edu.details %}
+        <ul class="exp-bullets">
+          {% for d in edu.details %}
+            <li>{{ d }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if resume.certifications %}
+  <div class="resume-section-heading">Certifications</div>
+  <ul class="exp-bullets">
+    {% for cert in resume.certifications %}
+      <li>{{ cert }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if resume.languages %}
+  <div class="resume-section-heading">Languages</div>
+  <div class="skill-row">{{ resume.languages | join("  •  ") }}</div>
+{% endif %}
+{% endblock %}

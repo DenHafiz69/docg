@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{ doc_type }}{% if doc_number %} - {{ doc_number }}{% endif %}</title>
+  <style>
+    :root {
+      --primary: {{ brand.primary_color }};
+      --accent: {{ brand.accent_color }};
+      --muted: {{ brand.muted_color }};
+    }
+    {{ shared_css | safe }}
+    {% block extra_css %}{% endblock %}
+  </style>
+</head>
+<body>
+  <div class="footer-string" data-footer="{{ footer_text }}"></div>
+
+  {% block header %}
+  <header class="doc-header">
+    <div class="brand-block">
+      {% if logo_uri %}
+        <img class="brand-logo" src="{{ logo_uri }}" alt="{{ brand.name }} logo" />
+      {% endif %}
+      <h1 class="brand-name">{{ brand.name }}</h1>
+      {% if brand.tagline %}
+        <div class="brand-tagline">{{ brand.tagline }}</div>
+      {% endif %}
+      <div class="brand-meta">
+        {% for line in brand.address %}
+          <div>{{ line }}</div>
+        {% endfor %}
+        {% set contact_parts = [] %}
+        {% if brand.email %}{% set _ = contact_parts.append(brand.email) %}{% endif %}
+        {% if brand.phone %}{% set _ = contact_parts.append(brand.phone) %}{% endif %}
+        {% if brand.website %}{% set _ = contact_parts.append(brand.website) %}{% endif %}
+        {% if contact_parts %}
+          <div>{{ contact_parts | join("  •  ") }}</div>
+        {% endif %}
+        {% set reg_parts = [] %}
+        {% if brand.registration_no %}{% set _ = reg_parts.append("Reg: " ~ brand.registration_no) %}{% endif %}
+        {% if brand.tax_id %}{% set _ = reg_parts.append("Tax ID: " ~ brand.tax_id) %}{% endif %}
+        {% if reg_parts %}
+          <div>{{ reg_parts | join("  •  ") }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="doc-title-block">
+      <div class="doc-badge">{{ doc_type }}</div>
+      {% if meta_rows %}
+      <table class="doc-meta-table">
+        {% for row in meta_rows %}
+          <tr>
+            <td class="meta-label">{{ row.label }}</td>
+            <td class="meta-value">{{ row.value }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+      {% endif %}
+    </div>
+  </header>
+  {% endblock %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

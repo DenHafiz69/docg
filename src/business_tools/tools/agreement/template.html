@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid-2">
+  <div class="info-card">
+    <div class="info-card-label">Service Provider</div>
+    <div class="info-card-title">{{ brand.name }}</div>
+    <div class="info-card-body">
+      {% for line in brand.address %}
+        <div>{{ line }}</div>
+      {% endfor %}
+      {% if brand.email %}<div>{{ brand.email }}</div>{% endif %}
+      {% if brand.phone %}<div>{{ brand.phone }}</div>{% endif %}
+      {% if brand.registration_no %}<div>Reg: {{ brand.registration_no }}</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="info-card">
+    <div class="info-card-label">Client</div>
+    <div class="info-card-title">{{ agreement.client.company or agreement.client.name }}</div>
+    <div class="info-card-body">
+      {% if agreement.client.company and agreement.client.name %}
+        <div>Attn: {{ agreement.client.name }}</div>
+      {% endif %}
+      {% for line in agreement.client.address %}
+        <div>{{ line }}</div>
+      {% endfor %}
+      {% if agreement.client.email %}<div>{{ agreement.client.email }}</div>{% endif %}
+      {% if agreement.client.phone %}<div>{{ agreement.client.phone }}</div>{% endif %}
+      {% if agreement.client.registration_no %}<div>Reg: {{ agreement.client.registration_no }}</div>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="letter-subject">
+  Subject: {{ agreement.title }}
+</div>
+
+<div class="letter-body">
+  <p>{{ salutation }}</p>
+  {% for para in agreement.intro_paragraphs %}
+    <p>{{ para }}</p>
+  {% endfor %}
+</div>
+
+{% if agreement.key_terms %}
+  <div class="section-heading">Commercial Summary</div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 32%;">Item</th>
+        <th style="width: 68%;">Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for term in agreement.key_terms %}
+        <tr>
+          <td class="item-title">{{ term.label }}</td>
+          <td>{{ term.value }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+
+{% if agreement.clauses %}
+  <div class="section-heading">Terms &amp; Scope of Agreement</div>
+  {% for clause in agreement.clauses %}
+    <div class="clause">
+      <div class="clause-title">{{ loop.index }}. {{ clause.title }}</div>
+      {% if clause.body %}
+        <p class="clause-body">{{ clause.body }}</p>
+      {% endif %}
+      {% if clause.bullets %}
+        <ul class="clause-bullets">
+          {% for bullet in clause.bullets %}
+            <li>{{ bullet }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      {% for sub in clause.subclauses %}
+        <div style="margin-top: 6px; margin-left: 10px;">
+          <div style="font-weight: 600; color: #0F172A; font-size: 9pt;">{{ loop.index }}. {{ sub.title }}</div>
+          {% if sub.bullets %}
+            <ul class="clause-bullets">
+              {% for bullet in sub.bullets %}
+                <li>{{ bullet }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+{% endif %}
+
+{% if agreement.closing_paragraphs %}
+  <div class="letter-body" style="margin-top: 14px;">
+    {% for para in agreement.closing_paragraphs %}
+      <p>{{ para }}</p>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if agreement.notes %}
+  <div class="notes-box">
+    <div class="info-card-label">Additional Notes</div>
+    <div>{{ agreement.notes }}</div>
+  </div>
+{% endif %}
+
+<div class="signatures">
+  {% for sig in signatures %}
+    <div class="sig-box">
+      <div class="sig-label">{{ sig.label }}</div>
+      <div class="sig-line">
+        <div class="sig-name">{{ sig.name }}</div>
+        {% if sig.title %}<div class="sig-meta">{{ sig.title }}</div>{% endif %}
+        {% if sig.company %}<div class="sig-meta">{{ sig.company }}</div>{% endif %}
+        <div class="sig-meta">Date: {{ sig.date or "____________________" }}</div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

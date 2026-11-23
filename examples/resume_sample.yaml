@@ -1,0 +1,42 @@
+headline: "Full-Stack Web Developer & Digital Systems Builder"
+github: "github.com/alexmorgan"
+linkedin: "linkedin.com/in/alexmorgan"
+
+summary: "Full-stack developer specializing in fast, mobile-first websites, e-commerce optimization, Cloudflare infrastructure, and Python automation tools for SMEs."
+
+experience:
+  - role: "Founder & Lead Developer"
+    company: "Acme Digital Studio"
+    location: "Kuala Lumpur, Malaysia"
+    period: "2024 – Present"
+    highlights:
+      - "Designed and delivered mobile-first business websites with pre-filled WhatsApp enquiry flows for SMEs, clinics, and retail brands."
+      - "Optimized WooCommerce stores, migrated domains to Cloudflare + modern cloud hosts, and eliminated front-end JS bottlenecks."
+      - "Built internal Python CLI tooling (docg) for automated invoicing, service agreements, and client ledger tracking."
+
+projects:
+  - name: "docg — AI-Friendly Document CLI"
+    url: "example.com"
+    tech: ["Python", "Typer", "Pydantic", "WeasyPrint", "SQLite"]
+    period: "2026"
+    highlights:
+      - "Built a schema-introspectable CLI generating consistent PDF invoices, agreements, resumes, and letters from YAML/JSON or stdin."
+      - "Integrated SQLite ledger tracking for sequential document numbering and payment status management."
+
+skills:
+  - category: "Languages"
+    items: ["Python", "TypeScript", "JavaScript", "HTML/CSS", "SQL", "PHP"]
+  - category: "Web & Infra"
+    items: ["Cloudflare", "WordPress / WooCommerce", "Next.js", "Linux", "Docker", "Git"]
+  - category: "Tooling"
+    items: ["uv", "Pydantic", "Jinja2", "WeasyPrint", "SQLite"]
+
+education:
+  - degree: "B.Sc. in Computer Science"
+    institution: "Universiti Malaya"
+    location: "Kuala Lumpur"
+    period: "2019 – 2023"
+
+languages:
+  - "Bahasa Melayu (Native)"
+  - "English (Professional)"

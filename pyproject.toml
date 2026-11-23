@@ -1,0 +1,28 @@
+[project]
+name = "docg"
+version = "0.2.0"
+description = "AI-friendly CLI for generating consistent PDF documents (invoices, agreements, resumes, letters, and more)."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "jinja2>=3.1.4",
+    "pydantic>=2.9.0",
+    "pyyaml>=6.0.2",
+    "typer>=0.12.5",
+    "weasyprint>=62.3",
+]
+
+[project.scripts]
+docg = "docg.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/docg"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+]

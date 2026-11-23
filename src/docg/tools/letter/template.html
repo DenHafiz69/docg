@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="letter-recipient">
+  <div class="letter-recipient-name">{{ letter.recipient.name }}</div>
+  {% if letter.recipient.role %}<div>{{ letter.recipient.role }}</div>{% endif %}
+  {% if letter.recipient.company %}<div>{{ letter.recipient.company }}</div>{% endif %}
+  {% for line in letter.recipient.address %}
+    <div>{{ line }}</div>
+  {% endfor %}
+  {% if letter.recipient.email %}<div>{{ letter.recipient.email }}</div>{% endif %}
+  {% if letter.recipient.phone %}<div>{{ letter.recipient.phone }}</div>{% endif %}
+</div>
+
+{% if letter.subject %}
+  <div class="letter-subject">
+    Subject: {{ letter.subject }}
+  </div>
+{% endif %}
+
+<div class="letter-body">
+  <p>{{ salutation }}</p>
+
+  {% for para in letter.paragraphs %}
+    <p>{{ para }}</p>
+    {% if loop.first and letter.bullets %}
+      <ul class="clause-bullets" style="margin-bottom: 10px;">
+        {% for bullet in letter.bullets %}
+          <li>{{ bullet }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endfor %}
+
+  {% for para in letter.closing_paragraphs %}
+    <p>{{ para }}</p>
+  {% endfor %}
+</div>
+
+{% if letter.notes %}
+  <div class="notes-box">
+    <div class="info-card-label">Note</div>
+    <div>{{ letter.notes }}</div>
+  </div>
+{% endif %}
+
+<div class="letter-signoff">
+  <div>{{ letter.sign_off }}</div>
+  <div class="letter-signoff-space"></div>
+  <div class="sig-name">{{ sender_name }}</div>
+  {% if sender_title %}
+    <div class="sig-meta">{{ sender_title }}</div>
+  {% endif %}
+</div>
+{% endblock %}

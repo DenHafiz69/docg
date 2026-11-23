@@ -1,0 +1,4 @@
+method: "Bank Transfer"
+bank_name: "Example Bank"
+account_name: "ACME DIGITAL STUDIO"
+account_number: "0000000000"

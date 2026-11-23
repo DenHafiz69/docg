@@ -1,0 +1,360 @@
+@page {
+  size: A4;
+  margin: 20mm 18mm 22mm 18mm;
+
+  @bottom-left {
+    content: string(footer-text);
+    font-family: "Inter", "DejaVu Sans", "Liberation Sans", sans-serif;
+    font-size: 8pt;
+    color: #64748B;
+  }
+
+  @bottom-right {
+    content: "Page " counter(page) " of " counter(pages);
+    font-family: "Inter", "DejaVu Sans", "Liberation Sans", sans-serif;
+    font-size: 8pt;
+    color: #64748B;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Inter", "DejaVu Sans", "Liberation Sans", sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.5;
+  color: #1E293B;
+}
+
+.footer-string {
+  string-set: footer-text attr(data-footer);
+  display: none;
+}
+
+/* Header */
+.doc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 14px;
+  border-bottom: 2.5px solid var(--accent, #0284C7);
+  margin-bottom: 20px;
+}
+
+.brand-block {
+  max-width: 58%;
+}
+
+.brand-logo {
+  max-height: 42px;
+  max-width: 160px;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.brand-name {
+  font-size: 16pt;
+  font-weight: 700;
+  color: var(--primary, #0F172A);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.brand-tagline {
+  font-size: 8pt;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent, #0284C7);
+  margin: 2px 0 6px 0;
+}
+
+.brand-meta {
+  font-size: 8pt;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.doc-title-block {
+  text-align: right;
+  max-width: 40%;
+}
+
+.doc-badge {
+  display: inline-block;
+  font-size: 14pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent, #1E3A5F);
+  margin: 0 0 8px 0;
+}
+
+.doc-meta-table {
+  margin-left: auto;
+  border-collapse: collapse;
+  font-size: 8.5pt;
+}
+
+.doc-meta-table td {
+  padding: 2px 0;
+}
+
+.doc-meta-table td.meta-label {
+  color: var(--muted, #64748B);
+  padding-right: 10px;
+  text-align: right;
+}
+
+.doc-meta-table td.meta-value {
+  font-weight: 600;
+  color: #0F172A;
+  text-align: right;
+}
+
+/* Info Cards / Party Grid */
+.grid-2 {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.info-card {
+  flex: 1;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-left: 3px solid var(--accent, #1E3A5F);
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+
+.info-card-label {
+  font-size: 7.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent, #1E3A5F);
+  margin-bottom: 4px;
+}
+
+.info-card-title {
+  font-size: 10pt;
+  font-weight: 700;
+  color: #0F172A;
+  margin-bottom: 2px;
+}
+
+.info-card-body {
+  font-size: 8.5pt;
+  color: #475569;
+  line-height: 1.4;
+}
+
+/* Section headings */
+.section-heading {
+  font-size: 10pt;
+  font-weight: 700;
+  color: var(--accent, #1E3A5F);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #E2E8F0;
+  padding-bottom: 4px;
+  margin: 18px 0 10px 0;
+}
+
+/* Data Tables */
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  font-size: 9pt;
+}
+
+table.data-table thead th {
+  background-color: var(--primary, #0F172A);
+  border-bottom: 2.5px solid var(--accent, #0284C7);
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+table.data-table thead th.num,
+table.data-table tbody td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+table.data-table tbody td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #E2E8F0;
+  vertical-align: top;
+}
+
+table.data-table tbody tr:nth-child(even) {
+  background-color: #F8FAFC;
+}
+
+.item-title {
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.item-desc {
+  font-size: 8pt;
+  color: #475569;
+  margin-top: 2px;
+}
+
+/* Totals */
+.totals-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-top: 8px;
+  break-inside: avoid;
+}
+
+.payment-box {
+  flex: 1.2;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 8.5pt;
+}
+
+.totals-table {
+  flex: 0.9;
+  border-collapse: collapse;
+  font-size: 9pt;
+}
+
+.totals-table td {
+  padding: 5px 8px;
+}
+
+.totals-table td.label {
+  color: #475569;
+  text-align: left;
+}
+
+.totals-table td.amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: #0F172A;
+}
+
+.totals-table tr.grand-total td {
+  border-top: 2px solid var(--accent, #1E3A5F);
+  border-bottom: 2px solid var(--accent, #1E3A5F);
+  background-color: #F8FAFC;
+  font-size: 10.5pt;
+  font-weight: 700;
+  color: var(--accent, #1E3A5F);
+  padding: 8px;
+}
+
+/* Notes & Legal / Agreement Clauses */
+.notes-box {
+  margin-top: 16px;
+  padding: 10px 12px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+  font-size: 8.5pt;
+  color: #334155;
+  break-inside: avoid;
+}
+
+.letter-subject {
+  font-size: 11pt;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 12px 0;
+  padding: 8px 12px;
+  background-color: #F8FAFC;
+  border-left: 3px solid var(--accent, #1E3A5F);
+}
+
+.letter-body p {
+  margin: 0 0 10px 0;
+  text-align: justify;
+}
+
+.clause {
+  margin-bottom: 12px;
+  break-inside: avoid;
+}
+
+.clause-title {
+  font-weight: 700;
+  color: var(--accent, #1E3A5F);
+  margin-bottom: 3px;
+}
+
+.clause-body {
+  margin: 0;
+  text-align: justify;
+}
+
+.clause-bullets {
+  margin: 4px 0 0 18px;
+  padding: 0;
+}
+
+.clause-bullets li {
+  margin-bottom: 3px;
+}
+
+/* Signature Block */
+.signatures {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 28px;
+  break-inside: avoid;
+}
+
+.sig-box {
+  flex: 1;
+  border: 1px solid #E2E8F0;
+  border-radius: 4px;
+  padding: 12px 14px;
+  background-color: #FFFFFF;
+}
+
+.sig-label {
+  font-size: 8pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent, #1E3A5F);
+  margin-bottom: 36px;
+}
+
+.sig-line {
+  border-top: 1px solid #94A3B8;
+  padding-top: 6px;
+  font-size: 8.5pt;
+}
+
+.sig-name {
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.sig-meta {
+  color: #475569;
+  font-size: 8pt;
+}

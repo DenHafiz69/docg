@@ -1,0 +1,16 @@
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Personal/client data and generated outputs
+data/
+output/
+config/default_brand.yaml
+config/default_payment.yaml
+config/profiles/*.yaml
+config/profiles/*.yml
+config/profiles/*.json
+!config/*.example.yaml
+!config/profiles/*.example.yaml
