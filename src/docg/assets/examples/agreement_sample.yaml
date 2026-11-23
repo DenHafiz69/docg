@@ -1,0 +1,49 @@
+agreement_number: "AGR-2026-001"
+effective_date: "2026-11-20"
+title: "Service Agreement — Mobile-First Website & WhatsApp Enquiry System"
+
+client:
+  name: "Dr. Aiman Hakim"
+  company: "Klinik Medisave KL"
+  role: "Managing Director"
+  address:
+    - "No. 18, Jalan Tun Razak"
+    - "50400 Kuala Lumpur"
+  email: "aiman@klinikmedisave.my"
+  phone: "+60 19-876 5432"
+
+intro_paragraphs:
+  - "This Agreement Letter sets out the terms and conditions under which Nedays System (\"Service Provider\") will design, develop, and deploy a mobile-first website and WhatsApp enquiry system for Klinik Medisave KL (\"Client\")."
+  - "Upon signature by both parties, this letter constitutes a binding agreement governing the scope, timeline, fees, and deliverables outlined below."
+
+key_terms:
+  - label: "Project Scope"
+    value: "5-page mobile-first website, local SEO foundation, and pre-filled WhatsApp enquiry flow"
+  - label: "Estimated Timeline"
+    value: "3 weeks from kickoff date and receipt of initial deposit and brand assets"
+  - label: "Total Project Fee"
+    value: "RM 3,350.00 (50% deposit upon signing, 50% upon launch)"
+  - label: "Support & Warranty"
+    value: "30 days post-launch bug fixes and minor content adjustments included"
+
+clauses:
+  - title: "Scope of Services & Deliverables"
+    body: "The Service Provider agrees to deliver the following items in accordance with the agreed project brief:"
+    bullets:
+      - "Custom mobile-first responsive website (Home, Services, About, Doctors/Team, Contact)."
+      - "Pre-filled WhatsApp enquiry buttons and structured lead-capture form."
+      - "Basic on-page local SEO setup, SSL configuration, and production deployment."
+  - title: "Client Responsibilities"
+    body: "The Client shall provide necessary branding materials, clinic information, service descriptions, and timely feedback within 3 business days of each review milestone to maintain the delivery schedule."
+  - title: "Fees & Payment Schedule"
+    body: "The total fee of RM 3,350.00 is payable in two installments: 50% deposit prior to commencement of work, and the remaining 50% upon final staging approval prior to live domain cutover."
+  - title: "Intellectual Property"
+    body: "Upon receipt of full payment, all custom website code, copy, and visual assets created specifically for the Client shall become the property of the Client, excluding pre-existing third-party libraries and open-source components."
+  - title: "Confidentiality & Termination"
+    body: "Both parties agree to keep proprietary business and technical information confidential. Either party may terminate this agreement with 7 days' written notice, with payment due for all completed milestones up to the termination date."
+
+closing_paragraphs:
+  - "Please sign and return a copy of this Agreement Letter to confirm your acceptance of these terms. We look forward to working with you."
+
+provider_signatory_name: "Den Hafiz"
+provider_signatory_title: "Founder, Nedays System"

@@ -10,47 +10,61 @@ A `uv`-managed Python CLI for generating consistently formatted PDF documents (*
 curl -fsSL https://raw.githubusercontent.com/DenHafiz69/docg/main/install.sh | bash
 ```
 
+This installs `docg` globally via `uv tool` and runs `docg init` to seed starter configs in `~/.config/docg/`.
+
 Optional environment variables:
-- `DOCG_DIR` — install/clone location (defaults to `~/.local/share/docg`)
 - `DOCG_REF` — git branch or tag to install (defaults to `main`)
 - `DOCG_REPO` — git repository URL
 
-### Install from a Local Checkout (Editable)
+### Or Install Directly with `uv`
+
+```bash
+uv tool install git+https://github.com/DenHafiz69/docg.git
+docg init
+```
+
+### Local Development Checkout
 
 ```bash
 ./install.sh
-# or directly with uv:
-uv tool install -e .
-```
-
-Or run locally inside the repo without installing globally:
-
-```bash
+# or:
 uv sync
 uv run docg --help
 ```
 
-Set `DOCG_HOME=/path/to/your/synced/folder` if you move or sync the config/data directory elsewhere.
+## Global Configuration & Storage (XDG)
+
+`docg` stores user configuration and ledger data globally so it works from any directory (especially when invoked by AI agents):
+
+- **Config & profiles**: `~/.config/docg/` (`default_brand.yaml`, `default_payment.yaml`, `profiles/*.yaml`) — override with `DOCG_CONFIG_DIR`
+- **Data & SQLite ledger**: `~/.local/share/docg/ledger.db` — override with `DOCG_DATA_DIR`
+- **Unified synced folder override**: Set `DOCG_HOME=/path/to/folder` (or pass `--home`) to store both `config/` and `data/` in one folder
+
+Inspect resolved paths anytime with `docg paths`.
 
 ## Commands
 
 ```bash
-# Discover types, profiles, schemas, and examples
-docg types
+# Initialize or inspect global paths & profiles
+docg init
+docg paths
 docg profiles
+
+# Discover types, schemas, and examples
+docg types
 docg schema invoice
 docg example resume
 
 # Generate from file
-docg generate invoice examples/invoice_sample.yaml -o output/invoice.pdf
-docg generate agreement examples/agreement_sample.yaml -o output/agreement.pdf
-docg generate resume examples/resume_sample.yaml -o output/resume.pdf
-docg generate letter examples/letter_sample.yaml -o output/letter.pdf
+docg generate invoice invoice.yaml -o invoice.pdf
+docg generate agreement agreement.yaml -o agreement.pdf
+docg generate resume resume.yaml -o resume.pdf
+docg generate letter letter.yaml -o letter.pdf
 
 # Generate from stdin with JSON output (ideal for AI agents)
-cat examples/resume_sample.yaml | docg generate resume - -o output/resume.pdf --json
+docg example resume | docg generate resume - -o resume.pdf --json
 
-# Ledger commands (SQLite at data/ledger.db)
+# Ledger commands (SQLite at ~/.local/share/docg/ledger.db)
 docg list
 docg next-number invoice
 docg status INV-2026-001 PAID
@@ -58,12 +72,10 @@ docg status INV-2026-001 PAID
 
 ## Pairing with AI Coding Tools
 
-Drop [SKILL.md](SKILL.md) into your AI tool's skills directory (or print it anytime with `docg skill`). Agents can introspect `docg schema <type>`, pick a profile (`nedays` or `personal`), validate with `--validate`, and generate PDFs via stdin or YAML files.
+Drop [SKILL.md](SKILL.md) into your AI tool's skills directory (or print it anytime with `docg skill`). Agents can introspect `docg paths --json`, `docg profiles --json`, and `docg schema <type>`, validate with `--validate`, and generate PDFs via stdin or YAML files.
 
 ## Project Layout
 
-- `config/profiles/`: Named sender profiles (`nedays.yaml`, `personal.yaml`)
-- `config/default_payment.yaml`: Default bank/payment details inherited by invoices
-- `data/ledger.db`: SQLite ledger tracking sequential numbers, amounts, and payment statuses
-- `src/docg/core/`: Shared models, paths, SQLite ledger, Jinja2 + WeasyPrint renderer, and tool registry
+- `src/docg/core/`: Shared models, XDG paths, SQLite ledger, Jinja2 + WeasyPrint renderer, and tool registry
 - `src/docg/tools/`: Document generators (`invoice`, `agreement`, `resume`, `letter`)
+- `src/docg/assets/`: Bundled example YAML files, starter config templates, and `SKILL.md`

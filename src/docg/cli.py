@@ -11,9 +11,19 @@ from rich.console import Console
 from rich.table import Table
 
 from docg.core.ledger import Ledger
-from docg.core.paths import default_ledger_path, examples_dir, resolve_home, skill_file_path
+from docg.core.paths import (
+    default_brand_path,
+    default_ledger_path,
+    default_payment_path,
+    examples_dir,
+    init_global_dirs,
+    profiles_dir,
+    resolve_config_dir,
+    resolve_data_dir,
+    skill_file_path,
+)
 from docg.core.registry import REGISTRY, get_tool
-from docg.core.renderer import list_profiles, load_data_file, load_data_text
+from docg.core.renderer import list_profiles, load_data_file, load_data_text, resolve_profile_path
 
 app = typer.Typer(
     name="docg",
@@ -52,7 +62,7 @@ def generate_cmd(
         None, "--output", "-o", help="Output PDF path (defaults to output/<name>_<type>.pdf)"
     ),
     profile: Optional[str] = typer.Option(
-        None, "--profile", "-p", help="Named profile in config/profiles/ (e.g. nedays, personal)"
+        None, "--profile", "-p", help="Named profile in ~/.config/docg/profiles/ (e.g. business, personal)"
     ),
     brand: Optional[Path] = typer.Option(
         None, "--brand", "-b", exists=True, dir_okay=False, help="Custom brand YAML/JSON override"
@@ -92,6 +102,13 @@ def generate_cmd(
         else:
             typer.echo(f"Valid {tool.name} input.")
         return
+
+    if profile is not None:
+        try:
+            resolve_profile_path(profile, home=home)
+        except FileNotFoundError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(code=2) from exc
 
     out_pdf = output or _default_output_path(tool.name, input_path)
     selected_profile = profile or tool.default_profile
@@ -180,20 +197,82 @@ def example_cmd(
 
 @app.command("profiles")
 def profiles_cmd(
-    home: Optional[Path] = typer.Option(None, "--home", help="Override synced workspace directory"),
+    home: Optional[Path] = typer.Option(None, "--home", help="Override workspace directory"),
     as_json: bool = typer.Option(False, "--json", help="Emit JSON output"),
 ) -> None:
-    """List available brand/personal profiles in config/profiles/."""
+    """List available brand/personal profiles in ~/.config/docg/profiles/."""
     names = list_profiles(home)
+    pdir = profiles_dir(home)
     if as_json:
-        typer.echo(json.dumps({"home": str(resolve_home(home)), "profiles": names}, indent=2))
+        typer.echo(
+            json.dumps(
+                {
+                    "config_dir": str(resolve_config_dir(home)),
+                    "profiles_dir": str(pdir),
+                    "profiles": names,
+                },
+                indent=2,
+            )
+        )
         return
 
     if not names:
-        typer.echo(f"No profiles found in {resolve_home(home) / 'config' / 'profiles'}")
+        typer.echo(f"No profiles found in {pdir}. Run 'docg init' to create starter profiles.")
         return
     for name in names:
         typer.echo(name)
+
+
+@app.command("init")
+def init_cmd(
+    force: bool = typer.Option(False, "--force", help="Overwrite existing starter config files"),
+    home: Optional[Path] = typer.Option(None, "--home", help="Override workspace directory"),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON output"),
+) -> None:
+    """Initialize global ~/.config/docg and ~/.local/share/docg directories with starter configs."""
+    result = init_global_dirs(home, force=force)
+    if as_json:
+        typer.echo(json.dumps(result, indent=2))
+        return
+
+    typer.echo(f"Config dir: {result['config_dir']}")
+    typer.echo(f"Data dir:   {result['data_dir']}")
+    if result["created"]:
+        typer.echo("Created:")
+        for path in result["created"]:
+            typer.echo(f"  + {path}")
+    if result["skipped"]:
+        typer.echo("Already exists (kept):")
+        for path in result["skipped"]:
+            typer.echo(f"  = {path}")
+
+
+@app.command("paths")
+def paths_cmd(
+    home: Optional[Path] = typer.Option(None, "--home", help="Override workspace directory"),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON output"),
+) -> None:
+    """Show resolved global config, profile, and ledger paths."""
+    info = {
+        "config_dir": str(resolve_config_dir(home)),
+        "profiles_dir": str(profiles_dir(home)),
+        "default_brand": str(default_brand_path(home)),
+        "default_payment": str(default_payment_path(home)),
+        "data_dir": str(resolve_data_dir(home)),
+        "ledger_path": str(default_ledger_path(home)),
+        "examples_dir": str(examples_dir(home)),
+        "skill_file": str(skill_file_path(home)),
+    }
+    if as_json:
+        typer.echo(json.dumps(info, indent=2))
+        return
+
+    table = Table(title="docg Paths")
+    table.add_column("Key", style="cyan", no_wrap=True)
+    table.add_column("Path")
+    for k, v in info.items():
+        table.add_row(k, v)
+    console.print(table)
 
 
 @app.command("skill")

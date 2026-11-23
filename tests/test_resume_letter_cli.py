@@ -92,3 +92,33 @@ def test_cli_schema_types_and_stdin_generate(tmp_path: Path) -> None:
     assert res_gen.exit_code == 0
     data = json.loads(res_gen.stdout)
     assert Path(data["pdf"]).exists()
+
+
+def test_cli_init_and_paths_global_xdg(tmp_path: Path, monkeypatch) -> None:
+    cfg_dir = tmp_path / "xdg_config" / "docg"
+    dat_dir = tmp_path / "xdg_data" / "docg"
+    monkeypatch.setenv("DOCG_CONFIG_DIR", str(cfg_dir))
+    monkeypatch.setenv("DOCG_DATA_DIR", str(dat_dir))
+    monkeypatch.delenv("DOCG_HOME", raising=False)
+
+    res_init = runner.invoke(app, ["init", "--json"])
+    assert res_init.exit_code == 0
+    init_data = json.loads(res_init.stdout)
+    assert Path(init_data["config_dir"]) == cfg_dir
+    assert Path(init_data["data_dir"]) == dat_dir
+    assert (cfg_dir / "default_brand.yaml").exists()
+    assert (cfg_dir / "default_payment.yaml").exists()
+    assert (cfg_dir / "profiles" / "business.yaml").exists()
+    assert (cfg_dir / "profiles" / "personal.yaml").exists()
+
+    res_paths = runner.invoke(app, ["paths", "--json"])
+    assert res_paths.exit_code == 0
+    paths_data = json.loads(res_paths.stdout)
+    assert Path(paths_data["ledger_path"]) == dat_dir / "ledger.db"
+    assert Path(paths_data["examples_dir"]).is_dir()
+    assert Path(paths_data["skill_file"]).exists()
+
+    res_profiles = runner.invoke(app, ["profiles", "--json"])
+    assert res_profiles.exit_code == 0
+    prof_data = json.loads(res_profiles.stdout)
+    assert set(prof_data["profiles"]) == {"business", "personal"}

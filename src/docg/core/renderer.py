@@ -52,14 +52,17 @@ def list_profiles(home: Path | None = None) -> list[str]:
 
 
 def resolve_profile_path(profile: str, home: Path | None = None) -> Path:
-    """Resolve a profile name (e.g. 'nedays' or 'personal') to its file path."""
+    """Resolve a profile name (e.g. 'business' or 'personal') to its file path."""
     pdir = profiles_dir(home)
     for ext in (".yaml", ".yml", ".json"):
         candidate = pdir / f"{profile}{ext}"
         if candidate.exists():
             return candidate
     available = ", ".join(list_profiles(home)) or "none"
-    raise FileNotFoundError(f"Profile '{profile}' not found in {pdir}. Available: {available}")
+    raise FileNotFoundError(
+        f"Profile '{profile}' not found in {pdir}. Available: {available}. "
+        "Run 'docg init' to create starter profiles."
+    )
 
 
 def resolve_brand(
@@ -67,12 +70,20 @@ def resolve_brand(
     profile: str | None = None,
     brand_path: Path | None = None,
     home: Path | None = None,
+    strict_profile: bool = False,
 ) -> BrandConfig:
     """Resolve BrandConfig by merging profile/default brand, optional --brand file, and inline overrides."""
     merged: dict[str, Any] = {}
 
     if profile is not None:
-        merged.update(load_data_file(resolve_profile_path(profile, home=home)))
+        try:
+            merged.update(load_data_file(resolve_profile_path(profile, home=home)))
+        except FileNotFoundError:
+            if strict_profile:
+                raise
+            fallback = default_brand_path(home)
+            if fallback.exists():
+                merged.update(load_data_file(fallback))
     else:
         fallback = default_brand_path(home)
         if fallback.exists():

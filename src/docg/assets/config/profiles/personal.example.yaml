@@ -1,0 +1,12 @@
+name: "Alex Morgan"
+tagline: "Software Engineer & Web Systems Developer"
+address:
+  - "Kuala Lumpur, Malaysia"
+email: "alex@example.com"
+phone: "+60 12-345 6789"
+website: "example.com"
+primary_color: "#0F172A"
+accent_color: "#0284C7"
+muted_color: "#64748B"
+footer_note: "Alex Morgan"
+signatory_name: "Alex Morgan"

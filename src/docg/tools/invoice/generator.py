@@ -28,7 +28,7 @@ def generate_invoice(
     data: InvoiceData | dict[str, Any],
     output_pdf: Path,
     *,
-    profile: str | None = "nedays",
+    profile: str | None = "business",
     brand_path: Path | None = None,
     output_html: Path | None = None,
     ledger: Ledger | None = None,

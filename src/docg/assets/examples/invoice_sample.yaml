@@ -1,0 +1,46 @@
+invoice_number: "INV-2026-001"
+issue_date: "2026-11-20"
+due_date: "2026-12-04"
+currency: "MYR"
+status: "UNPAID"
+project_title: "Mobile-First Website & WhatsApp Enquiry System"
+
+client:
+  name: "Dr. Aiman Hakim"
+  company: "Klinik Medisave KL"
+  address:
+    - "No. 18, Jalan Tun Razak"
+    - "50400 Kuala Lumpur"
+  email: "aiman@klinikmedisave.my"
+  phone: "+60 19-876 5432"
+
+items:
+  - title: "Website Design & Development (Mobile-First)"
+    description: "Responsive 5-page clinic website optimized for local search and fast mobile loading."
+    quantity: 1
+    unit: "package"
+    unit_price: 2400.00
+  - title: "WhatsApp Pre-filled Enquiry Integration"
+    description: "Structured appointment & enquiry form routing directly to clinic WhatsApp."
+    quantity: 1
+    unit: "module"
+    unit_price: 600.00
+  - title: "Domain & Cloud Hosting Setup (Year 1)"
+    description: "SSL certificate, DNS configuration, and performance caching."
+    quantity: 1
+    unit: "year"
+    unit_price: 350.00
+
+discount_percent: 0
+tax_rate: 0
+amount_paid: 1000.00
+
+payment:
+  method: "Bank Transfer / DuitNow"
+  bank_name: "Maybank"
+  account_name: "Nedays System"
+  account_number: "5140-1234-5678"
+  reference: "INV-2026-001"
+  terms: "50% deposit upon kickoff; balance due within 14 days of launch."
+
+notes: "Thank you for partnering with Nedays System. Please send your transfer receipt via WhatsApp or email once payment is completed."

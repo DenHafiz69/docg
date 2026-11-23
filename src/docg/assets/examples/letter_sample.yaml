@@ -1,0 +1,26 @@
+doc_label: "COVER LETTER"
+issue_date: "2026-11-23"
+subject: "Application for Senior Web Systems Engineer"
+
+recipient:
+  name: "Hiring Manager"
+  company: "Acme Digital Sdn Bhd"
+  address:
+    - "Level 12, Menara Sentral"
+    - "50470 Kuala Lumpur"
+
+salutation: "Dear Hiring Manager,"
+
+paragraphs:
+  - "I am writing to express my interest in the Senior Web Systems Engineer role at Acme Digital Sdn Bhd. Through my work leading Nedays System in Kuala Lumpur, I have focused on building fast, reliable web systems and developer tooling that directly improve business conversion and operational efficiency."
+  - "I would welcome the opportunity to bring this practical, end-to-end engineering mindset to your team and discuss how my experience aligns with your upcoming roadmap."
+
+bullets:
+  - "Delivered mobile-first websites and WooCommerce migrations with Cloudflare DNS, SSL, and caching optimization."
+  - "Built Python automation and document generation CLIs backed by Pydantic validation and SQLite."
+  - "Partnered directly with clients to scope requirements, manage delivery timelines, and maintain production reliability."
+
+closing_paragraphs:
+  - "Thank you for your time and consideration. I look forward to the opportunity to speak with you."
+
+sign_off: "Sincerely,"

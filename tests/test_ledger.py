@@ -7,6 +7,10 @@ from docg.tools.agreement.generator import generate_agreement
 from docg.tools.invoice.generator import generate_invoice
 
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+EXAMPLE_BRAND = REPO_ROOT / "config" / "default_brand.example.yaml"
+
+
 def test_ledger_auto_numbering_and_status(tmp_path: Path) -> None:
     db_path = tmp_path / "ledger.db"
     ledger = Ledger(db_path)
@@ -21,6 +25,7 @@ def test_ledger_auto_numbering_and_status(tmp_path: Path) -> None:
             "items": [{"title": "Setup", "quantity": 1, "unit_price": 500.0}],
         },
         output_pdf=tmp_path / "inv1.pdf",
+        brand_path=EXAMPLE_BRAND,
         ledger=ledger,
     )
 
@@ -34,6 +39,7 @@ def test_ledger_auto_numbering_and_status(tmp_path: Path) -> None:
             "client": {"name": "Client A"},
         },
         output_pdf=tmp_path / "agr1.pdf",
+        brand_path=EXAMPLE_BRAND,
         ledger=ledger,
     )
 
