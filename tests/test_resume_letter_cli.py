@@ -115,6 +115,7 @@ def test_cli_init_and_paths_global_xdg(tmp_path: Path, monkeypatch) -> None:
     assert res_paths.exit_code == 0
     paths_data = json.loads(res_paths.stdout)
     assert Path(paths_data["ledger_path"]) == dat_dir / "ledger.db"
+    assert Path(paths_data["resume_master"]) == cfg_dir / "resume_master.yaml"
     assert Path(paths_data["examples_dir"]).is_dir()
     assert Path(paths_data["skill_file"]).exists()
 

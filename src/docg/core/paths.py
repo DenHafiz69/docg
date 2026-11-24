@@ -86,6 +86,10 @@ def default_payment_path(home: Path | None = None) -> Path:
     return resolve_config_dir(home) / "default_payment.yaml"
 
 
+def resume_master_path(home: Path | None = None) -> Path:
+    return resolve_config_dir(home) / "resume_master.yaml"
+
+
 def default_ledger_path(home: Path | None = None) -> Path:
     return resolve_data_dir(home) / "ledger.db"
 

@@ -8,7 +8,7 @@ description: Generate consistent, branded PDF documents (invoices, service agree
 Use `docg` to generate clean, consistently styled PDF documents from structured YAML or JSON.
 
 Global user directories (XDG-compliant):
-- **Config & profiles**: `~/.config/docg/` (`default_brand.yaml`, `default_payment.yaml`, `profiles/*.yaml`) — override with `DOCG_CONFIG_DIR`
+- **Config & profiles**: `~/.config/docg/` (`default_brand.yaml`, `default_payment.yaml`, `profiles/*.yaml`, `resume_master.yaml`) — override with `DOCG_CONFIG_DIR`
 - **Data & SQLite ledger**: `~/.local/share/docg/ledger.db` — override with `DOCG_DATA_DIR`
 - **Unified workspace override**: Set `DOCG_HOME=/path/to/folder` (or pass `--home`) to store both `config/` and `data/` in one synced folder.
 
@@ -54,6 +54,25 @@ EOF
 - `--json`: Return structured JSON (`{"doc_type", "doc_number", "pdf", ...}`).
 - `--no-record`: Skip writing to the SQLite ledger (useful for drafts/tests).
 - `--home <dir>`: Override both config and data directories (or set `DOCG_HOME`).
+
+## Resume Workflow (Ask, Store Locally, and Tailor per Role)
+
+When the user asks to create or update a resume/CV, follow this workflow instead of guessing or inventing details:
+
+1. **Inspect locally stored data first**:
+   - Run `docg paths --json` to locate `profiles_dir` and `resume_master` (defaults to `~/.config/docg/profiles/personal.yaml` and `~/.config/docg/resume_master.yaml`).
+   - Check whether `personal.yaml` exists and has real user details (not placeholder values like `Alex Morgan` / `example.com`).
+   - Check whether `resume_master.yaml` exists with the user's career history.
+2. **Ask the user first for any missing information**:
+   - If `personal.yaml` is missing or still uses placeholders, ask the user for their contact details (full name, location/address, email, phone, website) and save them to `~/.config/docg/profiles/personal.yaml`.
+   - If `resume_master.yaml` is missing (or lacks sections needed), ask the user to provide their work experience, education, projects, skills, certifications, languages, and links (`github`, `linkedin`), then save the full, unmodified master record to `~/.config/docg/resume_master.yaml` (matching `docg schema resume`).
+   - If the user has not specified a **target role / job description**, ask what role they are targeting before generating.
+3. **Tailor for the target role (without overwriting the master file)**:
+   - Use `~/.config/docg/resume_master.yaml` as the factual source of truth—never fabricate employers, dates, degrees, or metrics.
+   - Tailor `headline`, `summary`, bullet phrasing, ordering, and which `experience`, `projects`, and `skills` to highlight based on the target role.
+   - Pipe the tailored YAML/JSON via stdin into `docg generate resume - -o <output.pdf> --profile personal --json` so `resume_master.yaml` stays intact as the master career bank.
+4. **Keep local records up to date**:
+   - Whenever the user shares new experience, projects, education, skills, or updated contact info, update `~/.config/docg/resume_master.yaml` or `~/.config/docg/profiles/personal.yaml` so future resumes reuse it automatically.
 
 ## Numbering & Ledger Tracking
 

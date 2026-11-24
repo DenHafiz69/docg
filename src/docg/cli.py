@@ -20,6 +20,7 @@ from docg.core.paths import (
     profiles_dir,
     resolve_config_dir,
     resolve_data_dir,
+    resume_master_path,
     skill_file_path,
 )
 from docg.core.registry import REGISTRY, get_tool
@@ -258,6 +259,7 @@ def paths_cmd(
         "profiles_dir": str(profiles_dir(home)),
         "default_brand": str(default_brand_path(home)),
         "default_payment": str(default_payment_path(home)),
+        "resume_master": str(resume_master_path(home)),
         "data_dir": str(resolve_data_dir(home)),
         "ledger_path": str(default_ledger_path(home)),
         "examples_dir": str(examples_dir(home)),
