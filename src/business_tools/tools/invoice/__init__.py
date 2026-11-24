@@ -1,1 +1,0 @@
-"""Invoice generation tool."""
