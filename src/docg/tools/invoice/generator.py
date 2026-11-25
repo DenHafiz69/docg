@@ -5,7 +5,7 @@ from typing import Any
 
 from docg.core.ledger import Ledger
 from docg.core.paths import default_payment_path
-from docg.core.renderer import load_data_file, render_document, resolve_brand
+from docg.core.renderer import load_data_file, render_document, resolve_brand, resolve_template
 from docg.tools.invoice.models import InvoiceData, PaymentInfo
 
 TEMPLATE_DIR = Path(__file__).parent
@@ -34,6 +34,7 @@ def generate_invoice(
     ledger: Ledger | None = None,
     input_path: Path | None = None,
     home: Path | None = None,
+    template: str | Path | None = None,
 ) -> dict[str, Any]:
     """Validate invoice data, compute totals, and render a PDF invoice."""
     invoice = data if isinstance(data, InvoiceData) else InvoiceData.model_validate(data)
@@ -110,9 +111,12 @@ def generate_invoice(
         "totals": totals,
     }
 
+    tdir, tname = resolve_template(
+        "invoice", template, default_dir=TEMPLATE_DIR, default_name="template.html", home=home
+    )
     rendered = render_document(
-        template_dir=TEMPLATE_DIR,
-        template_name="template.html",
+        template_dir=tdir,
+        template_name=tname,
         context=context,
         output_pdf=output_pdf,
         output_html=output_html,

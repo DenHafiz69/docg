@@ -8,7 +8,7 @@ description: Generate consistent, branded PDF documents (invoices, service agree
 Use `docg` to generate clean, consistently styled PDF documents from structured YAML or JSON.
 
 Global user directories (XDG-compliant):
-- **Config & profiles**: `~/.config/docg/` (`default_brand.yaml`, `default_payment.yaml`, `profiles/*.yaml`, `resume_master.yaml`) — override with `DOCG_CONFIG_DIR`
+- **Config & profiles**: `~/.config/docg/` (`default_brand.yaml`, `default_payment.yaml`, `profiles/*.yaml`, `resume_master.yaml`, `templates/<type>/*.html`) — override with `DOCG_CONFIG_DIR`
 - **Data & SQLite ledger**: `~/.local/share/docg/ledger.db` — override with `DOCG_DATA_DIR`
 - **Unified workspace override**: Set `DOCG_HOME=/path/to/folder` (or pass `--home`) to store both `config/` and `data/` in one synced folder.
 
@@ -21,7 +21,8 @@ Before generating a document, inspect the available types, profiles, and exact J
 ```bash
 docg types                    # List document types (invoice, agreement, resume, letter)
 docg profiles --json          # List profiles in ~/.config/docg/profiles/
-docg paths --json             # Show resolved config, profile, and ledger paths
+docg templates --json         # List saved custom HTML templates in ~/.config/docg/templates/
+docg paths --json             # Show resolved config, profile, template, and ledger paths
 docg schema <type>            # Print exact Pydantic JSON Schema for <type>
 docg example <type>           # Print a valid sample YAML for <type>
 ```
@@ -49,6 +50,7 @@ EOF
 
 ### Useful Flags
 - `--profile <name>` / `-p`: Choose a profile in `~/.config/docg/profiles/` (`business` is default for `invoice`/`agreement`; `personal` is default for `resume`/`letter`).
+- `--template <name-or-path>` / `-t`: Use a saved custom HTML template in `~/.config/docg/templates/<type>/<name>.html` or a direct path to an `.html` file.
 - `--brand <file>` / `-b`: Override brand settings with a custom YAML/JSON file.
 - `--validate`: Validate input against the Pydantic schema without rendering a PDF.
 - `--json`: Return structured JSON (`{"doc_type", "doc_number", "pdf", ...}`).
@@ -73,6 +75,35 @@ When the user asks to create or update a resume/CV, follow this workflow instead
    - Pipe the tailored YAML/JSON via stdin into `docg generate resume - -o <output.pdf> --profile personal --json` so `resume_master.yaml` stays intact as the master career bank.
 4. **Keep local records up to date**:
    - Whenever the user shares new experience, projects, education, skills, or updated contact info, update `~/.config/docg/resume_master.yaml` or `~/.config/docg/profiles/personal.yaml` so future resumes reuse it automatically.
+
+## Creating a Reusable Resume Template from an Image or PDF Sample
+
+When the user provides a reference resume **image** (PNG/JPG/WebP) or **PDF** and asks you to match its layout/style and generate their resume:
+
+1. **Inspect the reference sample visually**:
+   - View the image or PDF directly (if it is a multi-page PDF or cannot be viewed directly, render its pages to PNG first) and extract its visual design:
+     - Page size, margins, and column structure (single-column, two-column sidebar, header banner, etc.)
+     - Color palette (background, sidebar fill, primary text, muted text, accent color, divider lines)
+     - Typography (serif vs sans-serif, heading sizes, uppercase/letter-spacing, bold/italic hierarchy, bullet style, right-aligned dates)
+     - Section order and spacing density
+2. **Build and save a reusable Jinja2 HTML+CSS template**:
+   - Run `docg paths --json` to get `templates_dir` (`~/.config/docg/templates`).
+   - Choose a clean kebab-case template name (e.g. `modern-sidebar`, `classic-serif`, or the name the user requested) and save the template to:
+     `~/.config/docg/templates/resume/<template_name>.html`
+   - Write a **100% data-driven** Jinja2 template compatible with WeasyPrint (`@page { size: A4; margin: ...; }`, CSS flexbox/grid, `break-inside: avoid` on items). You may either `{% extends "base.html" %}` or write a standalone `<!DOCTYPE html>` document for full layout control.
+   - Never hardcode the sample's or user's personal text into the template. Guard every optional section with `{% if ... %}` and use the exact `docg` resume context variables:
+     - Top-level: `full_name`, `headline`, `contact_parts` (list of strings), `footer_text`
+     - `brand`: `name`, `tagline`, `address` (list), `email`, `phone`, `website`, `primary_color`, `accent_color`, `muted_color`, `footer_note`
+     - `resume`: `summary`, `github`, `linkedin`, `experience` (`role`, `company`, `location`, `period`, `highlights`), `projects` (`name`, `url`, `tech`, `period`, `highlights`), `skills` (`category`, `items`), `education` (`degree`, `institution`, `location`, `period`, `details`), `certifications` (list), `languages` (list)
+3. **Gather and tailor the user's resume data**:
+   - Follow the **Resume Workflow** above: check `~/.config/docg/profiles/personal.yaml` and `~/.config/docg/resume_master.yaml`, ask the user for any missing details and save them locally, then tailor the content for the user's target role.
+4. **Render the resume with the saved template and verify**:
+   - Generate the PDF using `--template <template_name>`:
+     ```bash
+     docg generate resume - -o <output.pdf> --profile personal --template <template_name> --json
+     ```
+   - Visually inspect the generated PDF (or render it to PNG and view it) to check alignment, contrast, margins, and page breaks against the user's sample; refine `~/.config/docg/templates/resume/<template_name>.html` if needed.
+   - Tell the user the saved template name (`<template_name>`) and path so they can reuse it anytime via `docg generate resume ... --template <template_name>` or list saved templates with `docg templates resume`.
 
 ## Numbering & Ledger Tracking
 

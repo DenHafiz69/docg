@@ -123,3 +123,62 @@ def test_cli_init_and_paths_global_xdg(tmp_path: Path, monkeypatch) -> None:
     assert res_profiles.exit_code == 0
     prof_data = json.loads(res_profiles.stdout)
     assert set(prof_data["profiles"]) == {"business", "personal"}
+
+
+def test_custom_saved_resume_template(tmp_path: Path, monkeypatch) -> None:
+    cfg_dir = tmp_path / "xdg_config" / "docg"
+    dat_dir = tmp_path / "xdg_data" / "docg"
+    monkeypatch.setenv("DOCG_CONFIG_DIR", str(cfg_dir))
+    monkeypatch.setenv("DOCG_DATA_DIR", str(dat_dir))
+    monkeypatch.delenv("DOCG_HOME", raising=False)
+
+    assert runner.invoke(app, ["init"]).exit_code == 0
+
+    tmpl_path = cfg_dir / "templates" / "resume" / "sample-sidebar.html"
+    tmpl_path.write_text(
+        """<!DOCTYPE html>
+<html><body>
+<div class="custom-sidebar-marker">CUSTOM TEMPLATE</div>
+<h1>{{ full_name }}</h1>
+<p>{{ headline }}</p>
+<p>{{ resume.summary }}</p>
+</body></html>""",
+        encoding="utf-8",
+    )
+
+    res_list = runner.invoke(app, ["templates", "resume", "--json"])
+    assert res_list.exit_code == 0
+    assert json.loads(res_list.stdout)["templates"] == {"resume": ["sample-sidebar"]}
+
+    out_pdf = tmp_path / "custom_resume.pdf"
+    out_html = tmp_path / "custom_resume.html"
+    payload = json.dumps({"headline": "Staff Engineer", "summary": "Tailored summary."})
+    res_gen = runner.invoke(
+        app,
+        [
+            "generate",
+            "resume",
+            "-",
+            "-o",
+            str(out_pdf),
+            "--html",
+            str(out_html),
+            "--template",
+            "sample-sidebar",
+            "--json",
+        ],
+        input=payload,
+    )
+    assert res_gen.exit_code == 0
+    assert out_pdf.exists() and out_pdf.stat().st_size > 500
+    html = out_html.read_text(encoding="utf-8")
+    assert "CUSTOM TEMPLATE" in html
+    assert "Staff Engineer" in html
+    assert "Tailored summary." in html
+
+    res_missing = runner.invoke(
+        app,
+        ["generate", "resume", "-", "-o", str(tmp_path / "x.pdf"), "--template", "does-not-exist"],
+        input=payload,
+    )
+    assert res_missing.exit_code == 2

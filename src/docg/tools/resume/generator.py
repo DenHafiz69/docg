@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from docg.core.ledger import Ledger
-from docg.core.renderer import render_document, resolve_brand
+from docg.core.renderer import render_document, resolve_brand, resolve_template
 from docg.tools.resume.models import ResumeData
 
 TEMPLATE_DIR = Path(__file__).parent
@@ -20,6 +20,7 @@ def generate_resume(
     ledger: Ledger | None = None,  # noqa: ARG001 - resumes are not tracked in ledger
     input_path: Path | None = None,  # noqa: ARG001
     home: Path | None = None,
+    template: str | Path | None = None,
 ) -> dict[str, Any]:
     """Validate resume data and render an ATS-friendly PDF resume."""
     resume = data if isinstance(data, ResumeData) else ResumeData.model_validate(data)
@@ -48,9 +49,12 @@ def generate_resume(
         "contact_parts": contact_parts,
     }
 
+    tdir, tname = resolve_template(
+        "resume", template, default_dir=TEMPLATE_DIR, default_name="template.html", home=home
+    )
     rendered = render_document(
-        template_dir=TEMPLATE_DIR,
-        template_name="template.html",
+        template_dir=tdir,
+        template_name=tname,
         context=context,
         output_pdf=output_pdf,
         output_html=output_html,

@@ -9,7 +9,7 @@ from jinja2 import ChoiceLoader, Environment, FileSystemLoader, select_autoescap
 from weasyprint import HTML
 
 from docg.core.models import BrandConfig
-from docg.core.paths import default_brand_path, profiles_dir
+from docg.core.paths import default_brand_path, profiles_dir, templates_dir
 
 CORE_TEMPLATES_DIR = Path(__file__).parent / "templates"
 
@@ -48,6 +48,63 @@ def list_profiles(home: Path | None = None) -> list[str]:
         return []
     return sorted(
         p.stem for p in pdir.iterdir() if p.is_file() and p.suffix.lower() in {".yaml", ".yml", ".json"}
+    )
+
+
+def list_templates(doc_type: str | None = None, home: Path | None = None) -> dict[str, list[str]]:
+    """List saved custom HTML templates under ~/.config/docg/templates/<doc_type>/."""
+    if doc_type is not None:
+        key = doc_type.strip().lower()
+        tdir = templates_dir(home, key)
+        if not tdir.is_dir():
+            return {key: []}
+        return {
+            key: sorted(p.stem for p in tdir.iterdir() if p.is_file() and p.suffix.lower() == ".html")
+        }
+
+    root = templates_dir(home)
+    if not root.is_dir():
+        return {}
+    result: dict[str, list[str]] = {}
+    for sub in sorted(root.iterdir()):
+        if sub.is_dir():
+            names = sorted(p.stem for p in sub.iterdir() if p.is_file() and p.suffix.lower() == ".html")
+            if names:
+                result[sub.name] = names
+    return result
+
+
+def resolve_template(
+    doc_type: str,
+    template: str | Path | None,
+    *,
+    default_dir: Path,
+    default_name: str = "template.html",
+    home: Path | None = None,
+) -> tuple[Path, str]:
+    """Resolve a custom template by file path or saved name in ~/.config/docg/templates/<doc_type>/."""
+    if template is None:
+        return default_dir, default_name
+
+    raw = Path(template).expanduser()
+    if raw.is_file():
+        resolved = raw.resolve()
+        return resolved.parent, resolved.name
+
+    tdir = templates_dir(home, doc_type)
+    name = str(template).strip()
+    candidates = [tdir / name]
+    if not name.lower().endswith(".html"):
+        candidates.insert(0, tdir / f"{name}.html")
+
+    for candidate in candidates:
+        if candidate.is_file():
+            resolved = candidate.resolve()
+            return resolved.parent, resolved.name
+
+    available = ", ".join(list_templates(doc_type, home=home).get(doc_type.strip().lower(), [])) or "none"
+    raise FileNotFoundError(
+        f"Template '{template}' not found for '{doc_type}' in {tdir}. Available: {available}."
     )
 
 

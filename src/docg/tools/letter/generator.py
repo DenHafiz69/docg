@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from docg.core.ledger import Ledger
-from docg.core.renderer import render_document, resolve_brand
+from docg.core.renderer import render_document, resolve_brand, resolve_template
 from docg.tools.letter.models import LetterData
 
 TEMPLATE_DIR = Path(__file__).parent
@@ -20,6 +20,7 @@ def generate_letter(
     ledger: Ledger | None = None,
     input_path: Path | None = None,
     home: Path | None = None,
+    template: str | Path | None = None,
 ) -> dict[str, Any]:
     """Validate letter data and render a PDF using the shared design system."""
     letter = data if isinstance(data, LetterData) else LetterData.model_validate(data)
@@ -51,9 +52,12 @@ def generate_letter(
         "sender_title": sender_title,
     }
 
+    tdir, tname = resolve_template(
+        "letter", template, default_dir=TEMPLATE_DIR, default_name="template.html", home=home
+    )
     rendered = render_document(
-        template_dir=TEMPLATE_DIR,
-        template_name="template.html",
+        template_dir=tdir,
+        template_name=tname,
         context=context,
         output_pdf=output_pdf,
         output_html=output_html,

@@ -90,6 +90,13 @@ def resume_master_path(home: Path | None = None) -> Path:
     return resolve_config_dir(home) / "resume_master.yaml"
 
 
+def templates_dir(home: Path | None = None, doc_type: str | None = None) -> Path:
+    base = resolve_config_dir(home) / "templates"
+    if doc_type:
+        return base / doc_type.strip().lower()
+    return base
+
+
 def default_ledger_path(home: Path | None = None) -> Path:
     return resolve_data_dir(home) / "ledger.db"
 
@@ -119,10 +126,12 @@ def init_global_dirs(home: Path | None = None, *, force: bool = False) -> dict[s
     """Initialize global config and data directories with starter config files."""
     cfg_dir = resolve_config_dir(home)
     prof_dir = profiles_dir(home)
+    tmpl_dir = templates_dir(home)
     dat_dir = resolve_data_dir(home)
 
     cfg_dir.mkdir(parents=True, exist_ok=True)
     prof_dir.mkdir(parents=True, exist_ok=True)
+    (tmpl_dir / "resume").mkdir(parents=True, exist_ok=True)
     dat_dir.mkdir(parents=True, exist_ok=True)
 
     template_root = ASSETS_DIR / "config"
@@ -151,6 +160,7 @@ def init_global_dirs(home: Path | None = None, *, force: bool = False) -> dict[s
     return {
         "config_dir": str(cfg_dir),
         "profiles_dir": str(prof_dir),
+        "templates_dir": str(tmpl_dir),
         "data_dir": str(dat_dir),
         "ledger_path": str(default_ledger_path(home)),
         "created": created,

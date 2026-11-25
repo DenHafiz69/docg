@@ -36,7 +36,7 @@ uv run docg --help
 
 `docg` stores user configuration and ledger data globally so it works from any directory (especially when invoked by AI agents):
 
-- **Config & profiles**: `~/.config/docg/` (`default_brand.yaml`, `default_payment.yaml`, `profiles/*.yaml`) — override with `DOCG_CONFIG_DIR`
+- **Config, profiles & custom templates**: `~/.config/docg/` (`default_brand.yaml`, `default_payment.yaml`, `profiles/*.yaml`, `resume_master.yaml`, `templates/<type>/*.html`) — override with `DOCG_CONFIG_DIR`
 - **Data & SQLite ledger**: `~/.local/share/docg/ledger.db` — override with `DOCG_DATA_DIR`
 - **Unified synced folder override**: Set `DOCG_HOME=/path/to/folder` (or pass `--home`) to store both `config/` and `data/` in one folder
 
@@ -45,20 +45,22 @@ Inspect resolved paths anytime with `docg paths`.
 ## Commands
 
 ```bash
-# Initialize or inspect global paths & profiles
+# Initialize or inspect global paths, profiles & custom templates
 docg init
 docg paths
 docg profiles
+docg templates
 
 # Discover types, schemas, and examples
 docg types
 docg schema invoice
 docg example resume
 
-# Generate from file
+# Generate from file (optionally using a saved custom template with -t/--template)
 docg generate invoice invoice.yaml -o invoice.pdf
 docg generate agreement agreement.yaml -o agreement.pdf
 docg generate resume resume.yaml -o resume.pdf
+docg generate resume resume.yaml -o resume.pdf --template modern-sidebar
 docg generate letter letter.yaml -o letter.pdf
 
 # Generate from stdin with JSON output (ideal for AI agents)

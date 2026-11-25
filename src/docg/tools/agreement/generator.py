@@ -5,7 +5,7 @@ from typing import Any
 
 from docg.core.ledger import Ledger
 from docg.core.models import SignatureParty
-from docg.core.renderer import render_document, resolve_brand
+from docg.core.renderer import render_document, resolve_brand, resolve_template
 from docg.tools.agreement.models import AgreementData
 
 TEMPLATE_DIR = Path(__file__).parent
@@ -21,6 +21,7 @@ def generate_agreement(
     ledger: Ledger | None = None,
     input_path: Path | None = None,
     home: Path | None = None,
+    template: str | Path | None = None,
 ) -> dict[str, Any]:
     """Validate agreement letter data and render a PDF using the shared design system."""
     agreement = data if isinstance(data, AgreementData) else AgreementData.model_validate(data)
@@ -67,9 +68,12 @@ def generate_agreement(
         "signatures": signatures,
     }
 
+    tdir, tname = resolve_template(
+        "agreement", template, default_dir=TEMPLATE_DIR, default_name="template.html", home=home
+    )
     rendered = render_document(
-        template_dir=TEMPLATE_DIR,
-        template_name="template.html",
+        template_dir=tdir,
+        template_name=tname,
         context=context,
         output_pdf=output_pdf,
         output_html=output_html,

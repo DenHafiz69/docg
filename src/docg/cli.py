@@ -22,9 +22,16 @@ from docg.core.paths import (
     resolve_data_dir,
     resume_master_path,
     skill_file_path,
+    templates_dir,
 )
 from docg.core.registry import REGISTRY, get_tool
-from docg.core.renderer import list_profiles, load_data_file, load_data_text, resolve_profile_path
+from docg.core.renderer import (
+    list_profiles,
+    list_templates,
+    load_data_file,
+    load_data_text,
+    resolve_profile_path,
+)
 
 app = typer.Typer(
     name="docg",
@@ -67,6 +74,12 @@ def generate_cmd(
     ),
     brand: Optional[Path] = typer.Option(
         None, "--brand", "-b", exists=True, dir_okay=False, help="Custom brand YAML/JSON override"
+    ),
+    template: Optional[str] = typer.Option(
+        None,
+        "--template",
+        "-t",
+        help="Custom HTML template name in ~/.config/docg/templates/<type>/ or path to .html file",
     ),
     html: Optional[Path] = typer.Option(None, "--html", help="Optional path to also save rendered HTML"),
     home: Optional[Path] = typer.Option(
@@ -117,16 +130,21 @@ def generate_cmd(
     if tool.uses_ledger and not no_record:
         ledger = Ledger(db or default_ledger_path(home))
 
-    result = tool.generator(
-        data,
-        output_pdf=out_pdf,
-        profile=selected_profile,
-        brand_path=brand,
-        output_html=html,
-        ledger=ledger,
-        input_path=input_path,
-        home=home,
-    )
+    try:
+        result = tool.generator(
+            data,
+            output_pdf=out_pdf,
+            profile=selected_profile,
+            brand_path=brand,
+            output_html=html,
+            ledger=ledger,
+            input_path=input_path,
+            home=home,
+            template=template,
+        )
+    except FileNotFoundError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
 
     if as_json:
         typer.echo(json.dumps(result, indent=2))
@@ -224,6 +242,36 @@ def profiles_cmd(
         typer.echo(name)
 
 
+@app.command("templates")
+def templates_cmd(
+    doc_type: Optional[str] = typer.Argument(
+        None, help="Optional document type to filter (e.g. resume, invoice, agreement, letter)"
+    ),
+    home: Optional[Path] = typer.Option(None, "--home", help="Override workspace directory"),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON output"),
+) -> None:
+    """List saved custom HTML templates in ~/.config/docg/templates/."""
+    if doc_type is not None:
+        try:
+            doc_type = get_tool(doc_type).name
+        except KeyError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(code=2) from exc
+
+    found = list_templates(doc_type=doc_type, home=home)
+    tdir = templates_dir(home, doc_type)
+    if as_json:
+        typer.echo(json.dumps({"templates_dir": str(tdir), "templates": found}, indent=2))
+        return
+
+    if not any(found.values()):
+        typer.echo(f"No custom templates found in {tdir}.")
+        return
+    for dtype, names in found.items():
+        for name in names:
+            typer.echo(f"{dtype}/{name}")
+
+
 @app.command("init")
 def init_cmd(
     force: bool = typer.Option(False, "--force", help="Overwrite existing starter config files"),
@@ -260,6 +308,7 @@ def paths_cmd(
         "default_brand": str(default_brand_path(home)),
         "default_payment": str(default_payment_path(home)),
         "resume_master": str(resume_master_path(home)),
+        "templates_dir": str(templates_dir(home)),
         "data_dir": str(resolve_data_dir(home)),
         "ledger_path": str(default_ledger_path(home)),
         "examples_dir": str(examples_dir(home)),
