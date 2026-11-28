@@ -1,6 +1,6 @@
 # `docg` — AI-Friendly Document Generator
 
-A `uv`-managed Python CLI for generating consistently formatted PDF documents (**invoices**, **service agreements**, **resumes**, and **letters**) designed to pair seamlessly with AI coding tools (Claude Code, OpenCode, Codex, Antigravity).
+A `uv`-managed Python CLI for generating consistently formatted PDF documents (**invoices**, **quotations**, **receipts**, **service agreements**, **resumes**, and **letters**) designed to pair seamlessly with AI coding tools (Claude Code, OpenCode, Codex, Antigravity).
 
 ## Install
 
@@ -36,7 +36,7 @@ uv run docg --help
 
 `docg` stores user configuration and ledger data globally so it works from any directory (especially when invoked by AI agents):
 
-- **Config, profiles & custom templates**: `~/.config/docg/` (`default_brand.yaml`, `default_payment.yaml`, `profiles/*.yaml`, `resume_master.yaml`, `templates/<type>/*.html`) — override with `DOCG_CONFIG_DIR`
+- **Config, profiles, clients & custom templates**: `~/.config/docg/` (`default_brand.yaml`, `default_payment.yaml`, `profiles/*.yaml`, `clients/*.yaml`, `resume_master.yaml`, `templates/<type>/*.html`) — override with `DOCG_CONFIG_DIR`
 - **Data & SQLite ledger**: `~/.local/share/docg/ledger.db` — override with `DOCG_DATA_DIR`
 - **Unified synced folder override**: Set `DOCG_HOME=/path/to/folder` (or pass `--home`) to store both `config/` and `data/` in one folder
 
@@ -45,19 +45,23 @@ Inspect resolved paths anytime with `docg paths`.
 ## Commands
 
 ```bash
-# Initialize or inspect global paths, profiles & custom templates
+# Initialize or inspect global paths, profiles, clients & custom templates
 docg init
 docg paths
 docg profiles
+docg clients
+docg clients add acme --name "Jane Doe" --company "Acme Sdn Bhd" --email jane@acme.my
 docg templates
 
 # Discover types, schemas, and examples
 docg types
-docg schema invoice
-docg example resume
+docg schema quotation
+docg example receipt
 
-# Generate from file (optionally using a saved custom template with -t/--template)
-docg generate invoice invoice.yaml -o invoice.pdf
+# Generate from file (with optional saved --client or --template)
+docg generate quotation quote.yaml -o quotation.pdf
+docg generate invoice invoice.yaml --client acme -o invoice.pdf
+docg generate receipt receipt.yaml -o receipt.pdf
 docg generate agreement agreement.yaml -o agreement.pdf
 docg generate resume resume.yaml -o resume.pdf
 docg generate resume resume.yaml -o resume.pdf --template modern-sidebar
@@ -66,10 +70,12 @@ docg generate letter letter.yaml -o letter.pdf
 # Generate from stdin with JSON output (ideal for AI agents)
 docg example resume | docg generate resume - -o resume.pdf --json
 
-# Ledger commands (SQLite at ~/.local/share/docg/ledger.db)
+# Ledger & conversion commands (SQLite at ~/.local/share/docg/ledger.db)
 docg list
 docg next-number invoice
-docg status INV-2026-001 PAID
+docg convert QUO-2026-001 --to invoice -o invoice.pdf
+docg convert INV-2026-001 --to receipt -o receipt.pdf
+docg status INV-2026-001 PAID --receipt -o receipt.pdf
 ```
 
 ## Pairing with AI Coding Tools
@@ -79,5 +85,5 @@ Drop [SKILL.md](SKILL.md) into your AI tool's skills directory (or print it anyt
 ## Project Layout
 
 - `src/docg/core/`: Shared models, XDG paths, SQLite ledger, Jinja2 + WeasyPrint renderer, and tool registry
-- `src/docg/tools/`: Document generators (`invoice`, `agreement`, `resume`, `letter`)
+- `src/docg/tools/`: Document generators (`invoice`, `quotation`, `receipt`, `agreement`, `resume`, `letter`)
 - `src/docg/assets/`: Bundled example YAML files, starter config templates, and `SKILL.md`

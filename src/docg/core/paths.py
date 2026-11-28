@@ -78,6 +78,10 @@ def profiles_dir(home: Path | None = None) -> Path:
     return resolve_config_dir(home) / "profiles"
 
 
+def clients_dir(home: Path | None = None) -> Path:
+    return resolve_config_dir(home) / "clients"
+
+
 def default_brand_path(home: Path | None = None) -> Path:
     return resolve_config_dir(home) / "default_brand.yaml"
 
@@ -126,11 +130,13 @@ def init_global_dirs(home: Path | None = None, *, force: bool = False) -> dict[s
     """Initialize global config and data directories with starter config files."""
     cfg_dir = resolve_config_dir(home)
     prof_dir = profiles_dir(home)
+    cli_dir = clients_dir(home)
     tmpl_dir = templates_dir(home)
     dat_dir = resolve_data_dir(home)
 
     cfg_dir.mkdir(parents=True, exist_ok=True)
     prof_dir.mkdir(parents=True, exist_ok=True)
+    cli_dir.mkdir(parents=True, exist_ok=True)
     (tmpl_dir / "resume").mkdir(parents=True, exist_ok=True)
     dat_dir.mkdir(parents=True, exist_ok=True)
 
@@ -160,6 +166,7 @@ def init_global_dirs(home: Path | None = None, *, force: bool = False) -> dict[s
     return {
         "config_dir": str(cfg_dir),
         "profiles_dir": str(prof_dir),
+        "clients_dir": str(cli_dir),
         "templates_dir": str(tmpl_dir),
         "data_dir": str(dat_dir),
         "ledger_path": str(default_ledger_path(home)),

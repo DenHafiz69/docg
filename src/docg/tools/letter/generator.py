@@ -73,6 +73,7 @@ def generate_letter(
             issue_date=letter.issue_date,
             input_path=input_path,
             output_path=rendered,
+            payload=letter.model_dump(mode="json"),
         )
 
     result: dict[str, Any] = {

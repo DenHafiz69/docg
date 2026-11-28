@@ -89,6 +89,7 @@ def generate_agreement(
             issue_date=agreement.effective_date,
             input_path=input_path,
             output_path=rendered,
+            payload=agreement.model_dump(mode="json"),
         )
 
     return {

@@ -8,8 +8,8 @@ import yaml
 from jinja2 import ChoiceLoader, Environment, FileSystemLoader, select_autoescape
 from weasyprint import HTML
 
-from docg.core.models import BrandConfig
-from docg.core.paths import default_brand_path, profiles_dir, templates_dir
+from docg.core.models import BrandConfig, Party
+from docg.core.paths import clients_dir, default_brand_path, profiles_dir, templates_dir
 
 CORE_TEMPLATES_DIR = Path(__file__).parent / "templates"
 
@@ -49,6 +49,92 @@ def list_profiles(home: Path | None = None) -> list[str]:
     return sorted(
         p.stem for p in pdir.iterdir() if p.is_file() and p.suffix.lower() in {".yaml", ".yml", ".json"}
     )
+
+
+def list_clients(home: Path | None = None) -> list[str]:
+    """List available saved client files under config/clients/."""
+    cdir = clients_dir(home)
+    if not cdir.is_dir():
+        return []
+    return sorted(
+        p.stem for p in cdir.iterdir() if p.is_file() and p.suffix.lower() in {".yaml", ".yml", ".json"}
+    )
+
+
+def resolve_client_path(client: str | Path, home: Path | None = None) -> Path:
+    """Resolve a saved client slug or direct file path to its Party file."""
+    raw = Path(client).expanduser()
+    if raw.is_file():
+        return raw.resolve()
+
+    cdir = clients_dir(home)
+    slug = str(client).strip()
+    for ext in (".yaml", ".yml", ".json"):
+        candidate = cdir / f"{slug}{ext}"
+        if candidate.exists():
+            return candidate
+    available = ", ".join(list_clients(home)) or "none"
+    raise FileNotFoundError(
+        f"Client '{client}' not found in {cdir}. Available: {available}."
+    )
+
+
+def load_client(client: str | Path, home: Path | None = None) -> Party:
+    """Load and validate a saved client Party record."""
+    data = load_data_file(resolve_client_path(client, home=home))
+    return Party.model_validate(data)
+
+
+def save_client(
+    slug: str,
+    party: Party | dict[str, Any],
+    home: Path | None = None,
+    *,
+    overwrite: bool = False,
+) -> Path:
+    """Save a client Party record to ~/.config/docg/clients/<slug>.yaml."""
+    clean_slug = slug.strip()
+    if not clean_slug or "/" in clean_slug or "\\" in clean_slug or clean_slug in {".", ".."}:
+        raise ValueError(f"Invalid client slug '{slug}'.")
+    validated = party if isinstance(party, Party) else Party.model_validate(party)
+    cdir = clients_dir(home)
+    cdir.mkdir(parents=True, exist_ok=True)
+    target = cdir / f"{clean_slug}.yaml"
+    if target.exists() and not overwrite:
+        raise FileExistsError(f"Client '{clean_slug}' already exists at {target}. Use --force to overwrite.")
+    payload = validated.model_dump(exclude_none=True)
+    if not payload.get("address"):
+        payload.pop("address", None)
+    target.write_text(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    return target
+
+
+def merge_client_into_data(
+    data: dict[str, Any],
+    *,
+    field_name: str,
+    client_override: str | None = None,
+    home: Path | None = None,
+) -> dict[str, Any]:
+    """Merge a saved client record into data[field_name] (CLI --client or string shorthand in YAML)."""
+    existing = data.get(field_name)
+    slug = client_override
+    inline: dict[str, Any] = {}
+
+    if isinstance(existing, str):
+        if slug is None:
+            slug = existing
+    elif isinstance(existing, dict):
+        inline = existing
+
+    if slug is None:
+        return data
+
+    saved = load_client(slug, home=home).model_dump(exclude_none=True)
+    if not saved.get("address"):
+        saved.pop("address", None)
+    merged = {**saved, **{k: v for k, v in inline.items() if v is not None}}
+    return {**data, field_name: merged}
 
 
 def list_templates(doc_type: str | None = None, home: Path | None = None) -> dict[str, list[str]]:

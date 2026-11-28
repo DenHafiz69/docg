@@ -136,6 +136,7 @@ def generate_invoice(
             issue_date=invoice.issue_date,
             input_path=input_path,
             output_path=rendered,
+            payload=invoice.model_dump(mode="json"),
         )
 
     return {

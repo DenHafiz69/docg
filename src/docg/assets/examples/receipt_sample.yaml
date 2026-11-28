@@ -1,0 +1,27 @@
+receipt_number: "REC-2026-001"
+payment_date: "2026-11-28"
+invoice_number: "INV-2026-001"
+currency: "MYR"
+project_title: "Clinic Website & Booking Portal Redesign"
+payment_method: "Bank Transfer (DuitNow)"
+payment_reference: "DN-20261128-88412"
+
+client:
+  name: "Dr. Sarah Lim"
+  company: "Klinik Medisave KL"
+  address:
+    - "No. 42, Jalan Bangsar Utama 1"
+    - "59000 Kuala Lumpur"
+  email: "sarah@medisavekl.com"
+
+items:
+  - title: "UI/UX Design & Responsive Frontend"
+    quantity: 1
+    unit: "package"
+    unit_price: 2400.00
+  - title: "Appointment Booking Integration"
+    quantity: 1
+    unit: "package"
+    unit_price: 950.00
+
+notes: "Thank you for your prompt payment."

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="grid-2">
+  <div class="info-card">
+    <div class="info-card-label">Received From</div>
+    <div class="info-card-title">{{ receipt.client.company or receipt.client.name }}</div>
+    <div class="info-card-body">
+      {% if receipt.client.company and receipt.client.name %}
+        <div>Attn: {{ receipt.client.name }}</div>
+      {% endif %}
+      {% for line in receipt.client.address %}
+        <div>{{ line }}</div>
+      {% endfor %}
+      {% if receipt.client.email %}<div>{{ receipt.client.email }}</div>{% endif %}
+      {% if receipt.client.phone %}<div>{{ receipt.client.phone }}</div>{% endif %}
+      {% if receipt.client.registration_no %}<div>Reg: {{ receipt.client.registration_no }}</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="info-card">
+    <div class="info-card-label">Payment Details</div>
+    <div class="info-card-title">{{ receipt.project_title or "Payment Received" }}</div>
+    <div class="info-card-body">
+      <div><strong>Method:</strong> {{ receipt.payment_method }}</div>
+      {% if receipt.payment_reference %}
+        <div><strong>Reference:</strong> {{ receipt.payment_reference }}</div>
+      {% endif %}
+      {% if receipt.invoice_number %}
+        <div><strong>Invoice Ref.:</strong> {{ receipt.invoice_number }}</div>
+      {% endif %}
+      <div><strong>Amount Paid:</strong> {{ totals.amount_paid }}</div>
+    </div>
+  </div>
+</div>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th style="width: 52%;">Description</th>
+      <th class="num" style="width: 14%;">Qty</th>
+      <th class="num" style="width: 17%;">Unit Price</th>
+      <th class="num" style="width: 17%;">Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+      <tr>
+        <td>
+          <div class="item-title">{{ item.title }}</div>
+          {% if item.description %}
+            <div class="item-desc">{{ item.description }}</div>
+          {% endif %}
+        </td>
+        <td class="num">{{ item.quantity }}</td>
+        <td class="num">{{ item.unit_price }}</td>
+        <td class="num">{{ item.total }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="totals-wrapper">
+  <div class="payment-box">
+    <div class="info-card-label">Payment Confirmation</div>
+    <div>
+      We acknowledge receipt of <strong>{{ totals.amount_paid }}</strong> via
+      <strong>{{ receipt.payment_method }}</strong> on <strong>{{ receipt.payment_date }}</strong>{% if receipt.invoice_number %} for Invoice <strong>{{ receipt.invoice_number }}</strong>{% endif %}.
+    </div>
+    {% if receipt.payment_reference %}
+      <div style="margin-top: 4px;"><strong>Transaction Ref.:</strong> {{ receipt.payment_reference }}</div>
+    {% endif %}
+  </div>
+
+  <table class="totals-table">
+    <tr>
+      <td class="label">Subtotal</td>
+      <td class="amount">{{ totals.subtotal }}</td>
+    </tr>
+    {% if totals.discount %}
+      <tr>
+        <td class="label">Discount</td>
+        <td class="amount">-{{ totals.discount }}</td>
+      </tr>
+    {% endif %}
+    {% if totals.tax_amount %}
+      <tr>
+        <td class="label">{{ totals.tax_label }}</td>
+        <td class="amount">{{ totals.tax_amount }}</td>
+      </tr>
+    {% endif %}
+    <tr>
+      <td class="label">Total</td>
+      <td class="amount">{{ totals.grand_total }}</td>
+    </tr>
+    <tr class="grand-total">
+      <td class="label">Amount Paid</td>
+      <td class="amount">{{ totals.amount_paid }}</td>
+    </tr>
+    {% if totals.has_balance %}
+      <tr>
+        <td class="label">Remaining Balance</td>
+        <td class="amount">{{ totals.balance_due }}</td>
+      </tr>
+    {% endif %}
+  </table>
+</div>
+
+{% if receipt.notes %}
+  <div class="notes-box">
+    <div class="info-card-label">Notes</div>
+    <div>{{ receipt.notes }}</div>
+  </div>
+{% endif %}
+{% endblock %}

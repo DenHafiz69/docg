@@ -1,0 +1,38 @@
+quotation_number: "QUO-2026-001"
+issue_date: "2026-11-28"
+valid_until: "2026-12-28"
+currency: "MYR"
+project_title: "Clinic Website & Booking Portal Redesign"
+status: "ISSUED"
+
+client:
+  name: "Dr. Sarah Lim"
+  company: "Klinik Medisave KL"
+  address:
+    - "No. 42, Jalan Bangsar Utama 1"
+    - "59000 Kuala Lumpur"
+  email: "sarah@medisavekl.com"
+  phone: "+60 3-2282 1190"
+
+items:
+  - title: "UI/UX Design & Responsive Frontend"
+    description: "Custom mobile-first clinic website with service catalog and doctor profiles."
+    quantity: 1
+    unit: "package"
+    unit_price: 2400.00
+  - title: "Appointment Booking Integration"
+    description: "Online slot booking with automated WhatsApp & email reminders."
+    quantity: 1
+    unit: "package"
+    unit_price: 950.00
+
+discount_percent: 0
+tax_rate: 0
+deposit_percent: 50
+
+terms:
+  - "50% deposit required upon quotation acceptance to schedule kickoff."
+  - "Remaining 50% balance due upon staging approval prior to launch."
+  - "Estimated delivery timeline: 3 weeks from receipt of deposit and assets."
+
+notes: "Prices are quoted in MYR and valid for 30 days from the issue date."

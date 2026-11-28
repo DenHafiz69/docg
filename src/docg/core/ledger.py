@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import sqlite3
 from datetime import date, datetime, timezone
@@ -51,11 +52,15 @@ class Ledger:
                     issue_date TEXT NOT NULL,
                     input_path TEXT,
                     output_path TEXT,
+                    payload_json TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 )
                 """
             )
+            cols = {row["name"] for row in conn.execute("PRAGMA table_info(documents)").fetchall()}
+            if "payload_json" not in cols:
+                conn.execute("ALTER TABLE documents ADD COLUMN payload_json TEXT")
 
     @staticmethod
     def prefix_for(doc_type: str) -> str:
@@ -94,10 +99,12 @@ class Ledger:
         balance_due: Optional[float] = None,
         input_path: Optional[Path] = None,
         output_path: Optional[Path] = None,
+        payload: Optional[dict[str, Any]] = None,
     ) -> None:
         """Insert or update a document record in the ledger."""
         now = datetime.now(timezone.utc).isoformat()
         year, seq = self.parse_year_seq(doc_number, date.today().year)
+        payload_str = json.dumps(payload) if payload is not None else None
 
         with self._connect() as conn:
             conn.execute(
@@ -105,8 +112,8 @@ class Ledger:
                 INSERT INTO documents (
                     doc_number, doc_type, year, seq, client_name, project_title,
                     currency, total_amount, balance_due, status, issue_date,
-                    input_path, output_path, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    input_path, output_path, payload_json, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(doc_number) DO UPDATE SET
                     doc_type = excluded.doc_type,
                     year = excluded.year,
@@ -120,6 +127,7 @@ class Ledger:
                     issue_date = excluded.issue_date,
                     input_path = excluded.input_path,
                     output_path = excluded.output_path,
+                    payload_json = COALESCE(excluded.payload_json, documents.payload_json),
                     updated_at = excluded.updated_at
                 """,
                 (
@@ -136,10 +144,28 @@ class Ledger:
                     issue_date,
                     str(input_path) if input_path else None,
                     str(output_path) if output_path else None,
+                    payload_str,
                     now,
                     now,
                 ),
             )
+
+    def get_document(self, doc_number: str) -> Optional[dict[str, Any]]:
+        """Retrieve a single document record by its document number."""
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM documents WHERE doc_number = ?",
+                (doc_number,),
+            ).fetchone()
+        if row is None:
+            return None
+        record = dict(row)
+        raw_payload = record.get("payload_json")
+        if raw_payload:
+            record["payload"] = json.loads(raw_payload)
+        else:
+            record["payload"] = None
+        return record
 
     def list_documents(
         self,

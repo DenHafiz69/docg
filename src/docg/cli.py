@@ -10,8 +10,11 @@ from pydantic import ValidationError
 from rich.console import Console
 from rich.table import Table
 
+from docg.core.converter import convert_document
 from docg.core.ledger import Ledger
+from docg.core.models import Party
 from docg.core.paths import (
+    clients_dir,
     default_brand_path,
     default_ledger_path,
     default_payment_path,
@@ -26,18 +29,27 @@ from docg.core.paths import (
 )
 from docg.core.registry import REGISTRY, get_tool
 from docg.core.renderer import (
+    list_clients,
     list_profiles,
     list_templates,
+    load_client,
     load_data_file,
     load_data_text,
+    merge_client_into_data,
+    resolve_client_path,
     resolve_profile_path,
+    save_client,
 )
 
 app = typer.Typer(
     name="docg",
-    help="AI-friendly CLI for generating consistent PDF documents (invoices, agreements, resumes, letters).",
+    help="AI-friendly CLI for generating consistent PDF documents (invoices, quotations, receipts, agreements, resumes, letters).",
     no_args_is_help=True,
 )
+clients_app = typer.Typer(
+    help="Manage reusable client/recipient records in ~/.config/docg/clients/.",
+)
+app.add_typer(clients_app, name="clients")
 console = Console()
 
 
@@ -61,7 +73,9 @@ def _default_output_path(doc_type: str, input_path: Optional[Path]) -> Path:
 @app.command("generate")
 @app.command("gen", hidden=True)
 def generate_cmd(
-    doc_type: str = typer.Argument(..., help="Document type: invoice, agreement, resume, letter"),
+    doc_type: str = typer.Argument(
+        ..., help="Document type: invoice, quotation, receipt, agreement, resume, letter"
+    ),
     input_file: Optional[str] = typer.Argument(
         None,
         help="Path to YAML/JSON data file, or '-' / omitted to read from stdin",
@@ -71,6 +85,12 @@ def generate_cmd(
     ),
     profile: Optional[str] = typer.Option(
         None, "--profile", "-p", help="Named profile in ~/.config/docg/profiles/ (e.g. business, personal)"
+    ),
+    client: Optional[str] = typer.Option(
+        None,
+        "--client",
+        "-c",
+        help="Saved client slug in ~/.config/docg/clients/ (or path to client YAML/JSON)",
     ),
     brand: Optional[Path] = typer.Option(
         None, "--brand", "-b", exists=True, dir_okay=False, help="Custom brand YAML/JSON override"
@@ -100,6 +120,19 @@ def generate_cmd(
         raise typer.Exit(code=2) from exc
 
     data, input_path = _load_input(input_file)
+
+    if client is not None and tool.client_field is None:
+        typer.echo(f"Document type '{tool.name}' does not support --client.", err=True)
+        raise typer.Exit(code=2)
+
+    if tool.client_field is not None:
+        try:
+            data = merge_client_into_data(
+                data, field_name=tool.client_field, client_override=client, home=home
+            )
+        except (FileNotFoundError, ValidationError, ValueError) as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(code=2) from exc
 
     if validate_only:
         try:
@@ -305,6 +338,7 @@ def paths_cmd(
     info = {
         "config_dir": str(resolve_config_dir(home)),
         "profiles_dir": str(profiles_dir(home)),
+        "clients_dir": str(clients_dir(home)),
         "default_brand": str(default_brand_path(home)),
         "default_payment": str(default_payment_path(home)),
         "resume_master": str(resume_master_path(home)),
@@ -397,6 +431,209 @@ def list_cmd(
     console.print(table)
 
 
+@clients_app.callback(invoke_without_command=True)
+def clients_list_cmd(
+    ctx: typer.Context,
+    home: Optional[Path] = typer.Option(None, "--home", help="Override workspace directory"),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON output"),
+) -> None:
+    """List saved clients in ~/.config/docg/clients/."""
+    if ctx.invoked_subcommand is not None:
+        return
+
+    names = list_clients(home)
+    cdir = clients_dir(home)
+    if as_json:
+        typer.echo(
+            json.dumps(
+                {
+                    "clients_dir": str(cdir),
+                    "clients": names,
+                },
+                indent=2,
+            )
+        )
+        return
+
+    if not names:
+        typer.echo(f"No clients found in {cdir}. Add one with 'docg clients add <slug> --name ...'.")
+        return
+    for name in names:
+        typer.echo(name)
+
+
+@clients_app.command("show")
+def clients_show_cmd(
+    slug: str = typer.Argument(..., help="Saved client slug"),
+    home: Optional[Path] = typer.Option(None, "--home", help="Override workspace directory"),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON output"),
+) -> None:
+    """Show details of a saved client."""
+    try:
+        party = load_client(slug, home=home)
+    except (FileNotFoundError, ValidationError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    data = party.model_dump(exclude_none=True)
+    if as_json:
+        typer.echo(json.dumps(data, indent=2))
+        return
+
+    table = Table(title=f"Client: {slug}")
+    table.add_column("Field", style="cyan", no_wrap=True)
+    table.add_column("Value")
+    for k, v in data.items():
+        if isinstance(v, list):
+            v_str = "\n".join(v) if v else "-"
+        else:
+            v_str = str(v)
+        table.add_row(k, v_str)
+    console.print(table)
+
+
+@clients_app.command("add")
+def clients_add_cmd(
+    slug: str = typer.Argument(..., help="Client slug (filename without extension, e.g. acme)"),
+    name: str = typer.Option(..., "--name", "-n", help="Contact person name"),
+    company: Optional[str] = typer.Option(None, "--company", help="Company or organization name"),
+    role: Optional[str] = typer.Option(None, "--role", help="Contact role/title"),
+    email: Optional[str] = typer.Option(None, "--email", help="Email address"),
+    phone: Optional[str] = typer.Option(None, "--phone", help="Phone number"),
+    address: Optional[list[str]] = typer.Option(
+        None, "--address", "-a", help="Address line (repeat flag for multiple lines)"
+    ),
+    registration_no: Optional[str] = typer.Option(None, "--reg", help="Company registration number"),
+    tax_id: Optional[str] = typer.Option(None, "--tax-id", help="Tax / SST / VAT ID"),
+    force: bool = typer.Option(False, "--force", help="Overwrite if client already exists"),
+    home: Optional[Path] = typer.Option(None, "--home", help="Override workspace directory"),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON output"),
+) -> None:
+    """Save a reusable client record under ~/.config/docg/clients/."""
+    party = Party(
+        name=name,
+        company=company,
+        role=role,
+        address=address or [],
+        email=email,
+        phone=phone,
+        registration_no=registration_no,
+        tax_id=tax_id,
+    )
+    try:
+        saved_path = save_client(slug, party, home=home, overwrite=force)
+    except (FileExistsError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
+
+    if as_json:
+        typer.echo(
+            json.dumps(
+                {"slug": slug, "path": str(saved_path), "client": party.model_dump(exclude_none=True)},
+                indent=2,
+            )
+        )
+    else:
+        typer.echo(f"Saved client '{slug}': {saved_path}")
+
+
+@clients_app.command("rm")
+def clients_rm_cmd(
+    slug: str = typer.Argument(..., help="Saved client slug to delete"),
+    home: Optional[Path] = typer.Option(None, "--home", help="Override workspace directory"),
+) -> None:
+    """Delete a saved client record."""
+    try:
+        path = resolve_client_path(slug, home=home)
+    except FileNotFoundError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
+
+    path.unlink()
+    typer.echo(f"Removed client '{slug}': {path}")
+
+
+@app.command("convert")
+def convert_cmd(
+    doc_number: str = typer.Argument(..., help="Source document number in ledger, e.g. QUO-2026-001 or INV-2026-001"),
+    to: str = typer.Option(..., "--to", help="Target document type: invoice or receipt"),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="Output PDF path (defaults to output/<source>_<to>.pdf)"
+    ),
+    profile: Optional[str] = typer.Option(
+        None, "--profile", "-p", help="Named profile in ~/.config/docg/profiles/"
+    ),
+    brand: Optional[Path] = typer.Option(
+        None, "--brand", "-b", exists=True, dir_okay=False, help="Custom brand YAML/JSON override"
+    ),
+    template: Optional[str] = typer.Option(
+        None, "--template", "-t", help="Custom HTML template name or path"
+    ),
+    html: Optional[Path] = typer.Option(None, "--html", help="Optional path to also save rendered HTML"),
+    due_date: Optional[str] = typer.Option(None, "--due-date", help="Due date (when converting to invoice)"),
+    payment_date: Optional[str] = typer.Option(None, "--payment-date", help="Payment date (when converting to receipt)"),
+    payment_method: Optional[str] = typer.Option(
+        None, "--payment-method", help="Payment method (when converting to receipt)"
+    ),
+    reference: Optional[str] = typer.Option(
+        None, "--reference", help="Payment/transaction reference (when converting to receipt)"
+    ),
+    amount: Optional[float] = typer.Option(
+        None, "--amount", help="Amount paid (when converting to receipt; defaults to full total)"
+    ),
+    keep_status: bool = typer.Option(
+        False, "--keep-status", help="Do not update the source document's status in the ledger"
+    ),
+    home: Optional[Path] = typer.Option(
+        None, "--home", help="Override synced workspace directory (or set DOCG_HOME)"
+    ),
+    db: Optional[Path] = typer.Option(None, "--db", help="Override SQLite ledger database path"),
+    no_record: bool = typer.Option(False, "--no-record", help="Skip recording the new document in the ledger"),
+    as_json: bool = typer.Option(False, "--json", help="Emit machine-readable JSON output"),
+) -> None:
+    """Convert a tracked ledger document (quotation -> invoice, invoice -> receipt)."""
+    ledger = Ledger(db or default_ledger_path(home))
+    target = to.strip().lower()
+    out_pdf = output or (Path("output") / f"{doc_number.lower()}_{target}.pdf")
+
+    if profile is not None:
+        try:
+            resolve_profile_path(profile, home=home)
+        except FileNotFoundError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(code=2) from exc
+
+    try:
+        result = convert_document(
+            ledger,
+            doc_number,
+            target,
+            output_pdf=out_pdf,
+            profile=profile or "business",
+            brand_path=brand,
+            output_html=html,
+            home=home,
+            template=template,
+            due_date=due_date,
+            payment_date=payment_date,
+            payment_method=payment_method,
+            payment_reference=reference,
+            amount_paid=amount,
+            record_in_ledger=not no_record,
+            update_source_status=not keep_status,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2) from exc
+
+    if as_json:
+        typer.echo(json.dumps(result, indent=2))
+    else:
+        typer.echo(
+            f"Converted {doc_number} -> {result['doc_type']} ({result['doc_number']}): {result['pdf']}"
+        )
+
+
 @app.command("status")
 def status_cmd(
     doc_number: str = typer.Argument(..., help="Document number, e.g. INV-2026-001"),
@@ -404,8 +641,17 @@ def status_cmd(
     balance_due: Optional[float] = typer.Option(
         None, "--balance", help="Optional updated balance due (automatically 0.0 when PAID)"
     ),
+    receipt: bool = typer.Option(
+        False, "--receipt", help="Automatically generate a receipt PDF when marking an invoice PAID"
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="Output PDF path for --receipt (defaults to output/<doc>_receipt.pdf)"
+    ),
+    payment_method: Optional[str] = typer.Option(None, "--payment-method", help="Payment method for --receipt"),
+    reference: Optional[str] = typer.Option(None, "--reference", help="Transaction reference for --receipt"),
     home: Optional[Path] = typer.Option(None, "--home", help="Override synced workspace directory"),
     db: Optional[Path] = typer.Option(None, "--db", help="Override SQLite ledger database path"),
+    as_json: bool = typer.Option(False, "--json", help="Emit JSON output"),
 ) -> None:
     """Update the status of a document in the SQLite ledger."""
     ledger = Ledger(db or default_ledger_path(home))
@@ -413,7 +659,35 @@ def status_cmd(
     if not updated:
         typer.echo(f"Document '{doc_number}' not found in ledger.", err=True)
         raise typer.Exit(code=1)
+
+    receipt_result: dict | None = None
+    if receipt:
+        out_pdf = output or (Path("output") / f"{doc_number.lower()}_receipt.pdf")
+        try:
+            receipt_result = convert_document(
+                ledger,
+                doc_number,
+                "receipt",
+                output_pdf=out_pdf,
+                home=home,
+                payment_method=payment_method,
+                payment_reference=reference,
+                update_source_status=False,
+            )
+        except (FileNotFoundError, ValueError) as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(code=2) from exc
+
+    if as_json:
+        payload: dict = {"doc_number": doc_number, "status": new_status.upper()}
+        if receipt_result is not None:
+            payload["receipt"] = receipt_result
+        typer.echo(json.dumps(payload, indent=2))
+        return
+
     typer.echo(f"Updated {doc_number} -> {new_status.upper()}")
+    if receipt_result is not None:
+        typer.echo(f"Generated receipt ({receipt_result['doc_number']}): {receipt_result['pdf']}")
 
 
 if __name__ == "__main__":

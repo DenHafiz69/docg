@@ -1,6 +1,6 @@
 ---
 name: docg
-description: Generate consistent, branded PDF documents (invoices, service agreements, resumes, and formal/cover letters) using the docg CLI. Use whenever the user asks to create an invoice, agreement, resume/CV, or letter.
+description: Generate consistent, branded PDF documents (invoices, quotations, receipts, service agreements, resumes, and formal/cover letters) using the docg CLI. Use whenever the user asks to create an invoice, quotation, receipt, agreement, resume/CV, or letter.
 ---
 
 # `docg` — AI-Friendly Document Generator
@@ -8,7 +8,7 @@ description: Generate consistent, branded PDF documents (invoices, service agree
 Use `docg` to generate clean, consistently styled PDF documents from structured YAML or JSON.
 
 Global user directories (XDG-compliant):
-- **Config & profiles**: `~/.config/docg/` (`default_brand.yaml`, `default_payment.yaml`, `profiles/*.yaml`, `resume_master.yaml`, `templates/<type>/*.html`) — override with `DOCG_CONFIG_DIR`
+- **Config, profiles & clients**: `~/.config/docg/` (`default_brand.yaml`, `default_payment.yaml`, `profiles/*.yaml`, `clients/*.yaml`, `resume_master.yaml`, `templates/<type>/*.html`) — override with `DOCG_CONFIG_DIR`
 - **Data & SQLite ledger**: `~/.local/share/docg/ledger.db` — override with `DOCG_DATA_DIR`
 - **Unified workspace override**: Set `DOCG_HOME=/path/to/folder` (or pass `--home`) to store both `config/` and `data/` in one synced folder.
 
@@ -19,8 +19,9 @@ Run `docg init` once to create starter configs, or `docg paths --json` to inspec
 Before generating a document, inspect the available types, profiles, and exact JSON schema so you never guess field names:
 
 ```bash
-docg types                    # List document types (invoice, agreement, resume, letter)
+docg types                    # List document types (invoice, quotation, receipt, agreement, resume, letter)
 docg profiles --json          # List profiles in ~/.config/docg/profiles/
+docg clients --json           # List saved clients in ~/.config/docg/clients/
 docg templates --json         # List saved custom HTML templates in ~/.config/docg/templates/
 docg paths --json             # Show resolved config, profile, template, and ledger paths
 docg schema <type>            # Print exact Pydantic JSON Schema for <type>
@@ -49,7 +50,8 @@ EOF
 ```
 
 ### Useful Flags
-- `--profile <name>` / `-p`: Choose a profile in `~/.config/docg/profiles/` (`business` is default for `invoice`/`agreement`; `personal` is default for `resume`/`letter`).
+- `--profile <name>` / `-p`: Choose a profile in `~/.config/docg/profiles/` (`business` is default for `invoice`/`quotation`/`receipt`/`agreement`; `personal` is default for `resume`/`letter`).
+- `--client <slug>` / `-c`: Load a saved client from `~/.config/docg/clients/<slug>.yaml` (or use `client: "<slug>"` / `recipient: "<slug>"` directly in YAML/JSON).
 - `--template <name-or-path>` / `-t`: Use a saved custom HTML template in `~/.config/docg/templates/<type>/<name>.html` or a direct path to an `.html` file.
 - `--brand <file>` / `-b`: Override brand settings with a custom YAML/JSON file.
 - `--validate`: Validate input against the Pydantic schema without rendering a PDF.
@@ -107,14 +109,16 @@ When the user provides a reference resume **image** (PNG/JPG/WebP) or **PDF** an
 
 ## Numbering & Ledger Tracking
 
-Invoices, agreements, and numbered letters are tracked in `~/.local/share/docg/ledger.db`:
-- Omit `invoice_number` / `agreement_number` or set it to `"AUTO"` to auto-assign the next sequential number (`INV-YYYY-NNN`, `AGR-YYYY-NNN`, `LTR-YYYY-NNN`).
-- Use ledger commands to check history and update payment status:
+Invoices, quotations, receipts, agreements, and numbered letters are tracked in `~/.local/share/docg/ledger.db`:
+- Omit `invoice_number` / `quotation_number` / `receipt_number` / `agreement_number` or set it to `"AUTO"` to auto-assign the next sequential number (`INV-YYYY-NNN`, `QUO-YYYY-NNN`, `REC-YYYY-NNN`, `AGR-YYYY-NNN`, `LTR-YYYY-NNN`).
+- Use ledger & conversion commands to check history, convert documents, and update payment status:
 
 ```bash
-docg list --json                     # List all recorded documents
-docg next-number invoice             # Check next invoice number
-docg status INV-2026-001 PAID        # Mark paid (sets balance_due to 0.0)
+docg list --json                                      # List all recorded documents
+docg next-number quotation                            # Check next quotation number
+docg convert QUO-2026-001 --to invoice -o inv.pdf     # Convert quotation to invoice (marks quote ACCEPTED)
+docg convert INV-2026-001 --to receipt -o rec.pdf     # Convert invoice to receipt (marks invoice PAID)
+docg status INV-2026-001 PAID --receipt -o rec.pdf    # Mark paid & auto-generate receipt
 ```
 
 ## Best Practices for AI Agents

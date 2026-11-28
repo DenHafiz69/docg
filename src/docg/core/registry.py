@@ -11,6 +11,10 @@ from docg.tools.invoice.generator import generate_invoice
 from docg.tools.invoice.models import InvoiceData
 from docg.tools.letter.generator import generate_letter
 from docg.tools.letter.models import LetterData
+from docg.tools.quotation.generator import generate_quotation
+from docg.tools.quotation.models import QuotationData
+from docg.tools.receipt.generator import generate_receipt
+from docg.tools.receipt.models import ReceiptData
 from docg.tools.resume.generator import generate_resume
 from docg.tools.resume.models import ResumeData
 
@@ -24,6 +28,7 @@ class DocTool:
     default_profile: str
     example_file: str
     uses_ledger: bool = False
+    client_field: str | None = None
 
 
 REGISTRY: dict[str, DocTool] = {
@@ -35,6 +40,27 @@ REGISTRY: dict[str, DocTool] = {
         default_profile="business",
         example_file="invoice_sample.yaml",
         uses_ledger=True,
+        client_field="client",
+    ),
+    "quotation": DocTool(
+        name="quotation",
+        description="Itemized business quotation / estimate with validity date, deposit, and terms.",
+        model=QuotationData,
+        generator=generate_quotation,
+        default_profile="business",
+        example_file="quotation_sample.yaml",
+        uses_ledger=True,
+        client_field="client",
+    ),
+    "receipt": DocTool(
+        name="receipt",
+        description="Payment receipt acknowledging full or partial payment against an invoice or order.",
+        model=ReceiptData,
+        generator=generate_receipt,
+        default_profile="business",
+        example_file="receipt_sample.yaml",
+        uses_ledger=True,
+        client_field="client",
     ),
     "agreement": DocTool(
         name="agreement",
@@ -44,6 +70,7 @@ REGISTRY: dict[str, DocTool] = {
         default_profile="business",
         example_file="agreement_sample.yaml",
         uses_ledger=True,
+        client_field="client",
     ),
     "resume": DocTool(
         name="resume",
@@ -53,6 +80,7 @@ REGISTRY: dict[str, DocTool] = {
         default_profile="personal",
         example_file="resume_sample.yaml",
         uses_ledger=False,
+        client_field=None,
     ),
     "letter": DocTool(
         name="letter",
@@ -62,6 +90,7 @@ REGISTRY: dict[str, DocTool] = {
         default_profile="personal",
         example_file="letter_sample.yaml",
         uses_ledger=True,
+        client_field="recipient",
     ),
 }
 
